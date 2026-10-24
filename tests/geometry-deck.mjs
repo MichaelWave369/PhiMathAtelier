@@ -26,6 +26,7 @@ function element(id){
  elements.set(id,e);return e;
 }
 const doc={
+ getElementById(){return null;},
  head:{append(){}},
  createElement(tag){
   if(tag==='canvas')return {width:0,height:0,getContext(){return context2D();}};
