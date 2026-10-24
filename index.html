@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.4 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.5 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -51,6 +51,7 @@
         <button class="mode" data-mode="4" aria-pressed="false"><span class="ico">◉</span><span><strong>Chromatic Warp</strong><small>AcidWarp-inspired color cycling</small></span></button>
       </div>
     </section>
+    <section class="section geometry-lab" id="geometryLab" aria-label="Sacred geometry construction laboratory"></section>
     <section class="section"><div class="section-head"><span class="smallcaps">02 / Light palette</span></div>
       <div class="palette-row" id="palettes" role="group" aria-label="Color palette">
         <button class="swatch" data-palette="0" title="Astral Rose" aria-label="Astral Rose" aria-pressed="true" style="background:linear-gradient(135deg,#402c7d,#db81ac 60%,#fbdca1)"></button>
@@ -95,6 +96,7 @@
   </aside>
   <main class="stage" id="stage" aria-label="Live mathematical artwork">
     <canvas id="art" aria-label="Procedural mathematical visualization. Controls are in the left panel."></canvas>
+    <canvas id="geometryCanvas" hidden aria-label="Sacred geometry canvas. Click a geometric stroke to select and inspect its layer."></canvas>
     <div class="overlay-top"><div class="glass"><div class="arttitle" id="stageTitle">The Unwritten Cosmos</div><div class="artsub" id="stageSub">Galaxy Cluster / Equation 01</div></div><div class="glass chip"><span class="dot"></span>LIVE GPU RENDER</div></div>
     <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–5 worlds · [ / ] deck mix · S PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
   </main>
@@ -110,7 +112,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.4.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.5.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -285,6 +287,7 @@ void main(){
 <script src="chromatic-warp.js"></script>
 <script src="vj-lab.js"></script>
 <script src="deck-mixer.js"></script>
+<script src="geometry-lab.js"></script>
 <script>
 (()=>{
  'use strict';
