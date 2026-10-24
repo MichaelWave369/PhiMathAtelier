@@ -6,7 +6,19 @@ A self-contained, completely offline mathematical art engine using JavaScript, W
 
 ## Launch
 
-Open `index.html` in Chrome, Edge, or Firefox. WebGL must be enabled. You can also serve the folder using `python -m http.server 8000` and visit `http://localhost:8000`.
+Open `index.html` in Chrome, Edge, or Firefox. WebGL is preferred for GPU rendering; a Canvas2D fallback is included if hardware acceleration is unavailable. You can also serve the folder using `python -m http.server 8000` and visit `http://localhost:8000`.
+
+## Hosted demo (after the first merge)
+
+The intended GitHub Pages URL is **https://michaelwave369.github.io/PhiMathAtelier/**.
+
+After merging the first pull request, open **Settings → Pages → Build and deployment** and select **GitHub Actions** as the source. The `.github/workflows/pages.yml` workflow then deploys the static app whenever `main` changes. The URL is only live after Pages is enabled and a deploy succeeds.
+
+No npm install or build step is needed.
+
+## Verify the source
+
+Run `node tests/smoke.mjs` with Node.js 22 or later to validate the standalone JavaScript, expected UI controls, four modes, five palettes and export features. The workflow also runs on pull requests.
 
 ## Controls
 
