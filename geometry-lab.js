@@ -1,4 +1,4 @@
-/* PhiMath Atelier v0.5.0 - Sacred Geometry Laboratory.
+/* PhiMath Atelier v0.6.0 - Audio-reactive Sacred Geometry Laboratory.
  * Independently constructed Euclidean and polar geometry. No dependencies, no eval.
  * This optional 2D canvas lives over the existing GPU/Dual Deck stage. */
 (function(global){
@@ -30,9 +30,10 @@ function sanitizeRecipe(data){
  if(!raw||!Array.isArray(raw.layers)||raw.layers.length===0||raw.layers.length>12)throw Error('Recipe requires 1–12 layers');
  return {layers:raw.layers.map(layer),selected:int(raw.selected,0,raw.layers.length-1,0),
   motion:clamp(raw.motion,0,120,12),paused:raw.paused===true,
-  background:['ink','midnight','parchment'].includes(raw.background)?raw.background:'ink'};
+  background:['ink','midnight','parchment'].includes(raw.background)?raw.background:'ink',
+  audio:{enabled:raw.audio?.enabled===true,wet:clamp(raw.audio?.wet,0,1,.75)}};
 }
-function initial(){return {layers:preset('metatron'),selected:0,motion:12,paused:false,background:'ink'};}
+function initial(){return {layers:preset('metatron'),selected:0,motion:12,paused:false,background:'ink',audio:{enabled:false,wet:.75}};}
 const point=(radius,a)=>[radius*Math.cos(a),radius*Math.sin(a)];
 function poly(points,closed){return {points,closed:!!closed};}
 function circle(x,y,r,segments=96){
@@ -104,6 +105,42 @@ function distance2(px,py,a,b){
  const x=a[0]+t*dx,y=a[1]+t*dy;
  return (px-x)*(px-x)+(py-y)*(py-y);
 }
+
+// VJ modulation changes only draw-time transforms. Raw geometry is unchanged.
+function audioEffect(recipe,bands){
+ const wet=recipe?.audio?.enabled===true?clamp(recipe.audio.wet,0,1,.75):0;
+ const bass=clamp(bands?.bass,0,1,0),mid=clamp(bands?.mid,0,1,0);
+ const high=clamp(bands?.high,0,1,0),beat=clamp(bands?.beat,0,1,0);
+ return {scale:1+wet*(.16*bass+.18*beat),turn:wet*(.12*mid+.06*beat),
+  glow:1+wet*(.8*high+.6*beat),opacity:1+wet*(.3*high+.2*beat)};
+}
+function layerPose(l,i,recipe,seconds,bands){
+ const fx=audioEffect(recipe,bands),direction=i%2?-1:1;
+ return {angle:l.angle*Math.PI/180+seconds*recipe.motion*Math.PI/180*l.speed*direction+fx.turn*direction,
+   scale:fx.scale,glow:fx.glow,opacity:Math.min(1,l.opacity*(i===recipe.selected?1:.8)*fx.opacity)};
+}
+// Self-contained, script-free SVG snapshot. Canvas2D and SVG share the same paths.
+function svgSnapshot(raw,seconds=0,width=1200,height=1200,bands=null){
+ const recipe=sanitizeRecipe(raw),w=int(width,128,4096,1200),h=int(height,128,4096,1200);
+ const fmt=n=>String(Number(n.toFixed(5))),base=Math.min(w,h)*.455;
+ const background=recipe.background==='parchment'?'#f2e8d6':recipe.background==='midnight'?'#050b22':'#08080e';
+ const center=recipe.background==='parchment'?'#f2e8d6':recipe.background==='midnight'?'#17223d':'#251b25';
+ const stops=recipe.background==='parchment'?'':'<defs><radialGradient id="field" cx="50%" cy="50%" r="75%"><stop offset="0%" stop-color="'+center+'"/><stop offset="100%" stop-color="#05060b"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#field)"/>';
+ const items=recipe.layers.map((l,i)=>{
+  if(!l.visible)return '';
+  const p=layerPose(l,i,recipe,Number.isFinite(seconds)?seconds:0,bands);
+  const scale=base*p.scale,rotation=fmt(p.angle*180/Math.PI);
+  const stroke=recipe.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
+  const paths=geometry(l).map(({points,closed})=>{
+   if(points.length<2)return '';
+   const d='M'+points.map(p=>fmt(p[0])+' '+fmt(p[1])).join('L')+(closed?'Z':'');
+   return '<path d="'+d+'"/>';
+  }).join('');
+  return '<g transform="translate('+fmt(w/2)+' '+fmt(h/2)+') rotate('+rotation+') scale('+fmt(scale)+')" fill="none" stroke="'+stroke+'" stroke-opacity="'+fmt(p.opacity)+'" stroke-width="'+fmt((i===recipe.selected?1.8:1.15)/base)+'" stroke-linejoin="round" stroke-linecap="round">'+paths+'</g>';
+ }).join('');
+ return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img">\n<title>PhiMath Atelier Geometry</title>\n<desc>Original Euclidean and parametric geometry; current animation-frame vector snapshot.</desc>\n<rect width="100%" height="100%" fill="'+background+'"/>'+stops+items+'</svg>';
+}
+
 const css=[
  '.geometry-lab{border:1px solid #78614a;border-radius:15px;background:linear-gradient(160deg,#292016,#111722);padding:14px;margin:15px 0 24px}',
  '.geometry-lab h2{margin:0 0 6px;color:#f5d49d;font:21px Georgia,serif}',
@@ -311,7 +348,7 @@ function create({root,canvas,stage}){
  sync();
  return {activate,getState:()=>JSON.parse(JSON.stringify(state)),setState:raw=>{state=sanitizeRecipe(raw);buffer.clear();sync();save();}};
 }
-global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,create,PHI};
+global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,svgSnapshot,audioEffect,layerPose,create,PHI};
 if(typeof document!=='undefined'){
  const mount=()=>{const root=document.getElementById('geometryLab'),canvas=document.getElementById('geometryCanvas'),stage=document.getElementById('stage');
   if(root&&canvas&&stage){try{global.PhiGeometryLab.instance=create({root,canvas,stage});}catch(e){console.error('Geometry lab:',e);}}
