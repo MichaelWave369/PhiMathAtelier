@@ -218,8 +218,8 @@ function create({root,canvas,stage}){
   if(!buffer.has(key))buffer.set(key,geometry(l));
   return buffer.get(key);
  }
- function angle(l,i){return l.angle*Math.PI/180+(state.paused?clock:clock)*state.motion*Math.PI/180*l.speed*(i%2?-1:1);}
- function paint(ctx,w,h){
+ function readBands(){try{return typeof global.PhiAtelierAudioLevels==='function'?global.PhiAtelierAudioLevels():null;}catch(_){return null;}}
+ function paint(ctx,w,h,bands=readBands()){
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,w,h);
   const dark=state.background!=='parchment',min=Math.min(w,h);
@@ -233,11 +233,12 @@ function create({root,canvas,stage}){
   const scale=min*.455;
   for(let i=0;i<state.layers.length;i++){
    const l=state.layers[i];if(!l.visible)continue;
-   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle(l,i));ctx.scale(scale,scale);
+   const pose=layerPose(l,i,state,clock,bands);
+   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(pose.angle);ctx.scale(scale*pose.scale,scale*pose.scale);
    ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=(i===state.selected?1.8:1.15)/scale;
    ctx.strokeStyle=state.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
-   ctx.shadowColor=l.color;ctx.shadowBlur=dark?11:0;
-   ctx.globalAlpha=l.opacity*(i===state.selected?1:.8);
+   ctx.shadowColor=l.color;ctx.shadowBlur=dark?11*pose.glow:0;
+   ctx.globalAlpha=pose.opacity;
    for(const line of drawPaths(l)){
     const pts=line.points;if(pts.length<2)continue;
     ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
@@ -260,7 +261,9 @@ function create({root,canvas,stage}){
  function frame(now){
   if(!active)return;
   if(last&&!state.paused)clock+=Math.min(.08,Math.max(0,(now-last)/1000));
-  last=now;resize();paint(context,canvas.width,canvas.height);
+  last=now;resize();const bands=readBands();paint(context,canvas.width,canvas.height,bands);
+  if(now-lastMeter>120){lastMeter=now;const v=k=>Math.round(100*clamp(bands?.[k],0,1,0));
+   $('glMeter').textContent='B '+v('bass')+' · M '+v('mid')+' · H '+v('high')+' · BEAT '+v('beat');}
   raf=requestAnimationFrame(frame);
  }
  function activate(next){
@@ -318,10 +321,10 @@ function create({root,canvas,stage}){
  canvas.addEventListener('pointerdown',event=>{
   if(!active)return;
   const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*canvas.width/rect.width,y=(event.clientY-rect.top)*canvas.height/rect.height;
-  const scale=Math.min(canvas.width,canvas.height)*.455,threshold=Math.pow(11/scale,2);
+  const scale=Math.min(canvas.width,canvas.height)*.455,threshold=Math.pow(11/scale,2),bands=readBands();
   for(let i=state.layers.length-1;i>=0;i--){
    const l=state.layers[i];if(!l.visible)continue;
-   const a=-angle(l,i),px=(x-canvas.width/2)/scale,py=(y-canvas.height/2)/scale;
+   const pose=layerPose(l,i,state,clock,bands),a=-pose.angle,px=(x-canvas.width/2)/(scale*pose.scale),py=(y-canvas.height/2)/(scale*pose.scale);
    const lx=px*Math.cos(a)-py*Math.sin(a),ly=px*Math.sin(a)+py*Math.cos(a);
    let found=false;
    for(const line of drawPaths(l)){
@@ -340,10 +343,12 @@ function create({root,canvas,stage}){
   const w=Math.max(2,canvas.width),h=Math.max(2,canvas.height);
   const gain=Math.min(2.5,Math.sqrt(5000000/(w*h)));
   const exportCanvas=document.createElement('canvas');exportCanvas.width=Math.round(w*gain);exportCanvas.height=Math.round(h*gain);
-  paint(exportCanvas.getContext('2d'),exportCanvas.width,exportCanvas.height);
+  paint(exportCanvas.getContext('2d'),exportCanvas.width,exportCanvas.height,readBands());
   exportCanvas.toBlob(blob=>{if(blob){download(blob,filename('png'));status('Geometry PNG saved.');}else status('PNG export unavailable in this browser.');},'image/png');
  });
- $('glJSON').addEventListener('click',()=>{download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'0.5.0',geometry:state},null,2)],{type:'application/json'}),filename('json'));status('Geometry-only recipe exported.');});
+ $('glSVG').addEventListener('click',()=>{const text=svgSnapshot(state,clock,1600,1600,readBands());
+  download(new Blob([text],{type:'image/svg+xml;charset=utf-8'}),filename('svg'));status('Editable SVG vector snapshot exported.');});
+ $('glJSON').addEventListener('click',()=>{download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'0.6.0',geometry:state},null,2)],{type:'application/json'}),filename('json'));status('Geometry recipe exported.');});
  $('glImport').addEventListener('click',()=>$('glFile').click());
  $('glFile').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;
   try{if(file.size>120000)throw Error('recipe too large');
