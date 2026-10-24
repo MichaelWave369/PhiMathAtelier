@@ -1,4 +1,4 @@
-/* PhiMath Atelier v0.5.0 - Sacred Geometry Laboratory.
+/* PhiMath Atelier v0.6.0 - Audio-reactive Sacred Geometry Laboratory.
  * Independently constructed Euclidean and polar geometry. No dependencies, no eval.
  * This optional 2D canvas lives over the existing GPU/Dual Deck stage. */
 (function(global){
@@ -30,9 +30,10 @@ function sanitizeRecipe(data){
  if(!raw||!Array.isArray(raw.layers)||raw.layers.length===0||raw.layers.length>12)throw Error('Recipe requires 1–12 layers');
  return {layers:raw.layers.map(layer),selected:int(raw.selected,0,raw.layers.length-1,0),
   motion:clamp(raw.motion,0,120,12),paused:raw.paused===true,
-  background:['ink','midnight','parchment'].includes(raw.background)?raw.background:'ink'};
+  background:['ink','midnight','parchment'].includes(raw.background)?raw.background:'ink',
+  audio:{enabled:raw.audio?.enabled===true,wet:clamp(raw.audio?.wet,0,1,.75)}};
 }
-function initial(){return {layers:preset('metatron'),selected:0,motion:12,paused:false,background:'ink'};}
+function initial(){return {layers:preset('metatron'),selected:0,motion:12,paused:false,background:'ink',audio:{enabled:false,wet:.75}};}
 const point=(radius,a)=>[radius*Math.cos(a),radius*Math.sin(a)];
 function poly(points,closed){return {points,closed:!!closed};}
 function circle(x,y,r,segments=96){
@@ -104,6 +105,42 @@ function distance2(px,py,a,b){
  const x=a[0]+t*dx,y=a[1]+t*dy;
  return (px-x)*(px-x)+(py-y)*(py-y);
 }
+
+// VJ modulation changes only draw-time transforms. Raw geometry is unchanged.
+function audioEffect(recipe,bands){
+ const wet=recipe?.audio?.enabled===true?clamp(recipe.audio.wet,0,1,.75):0;
+ const bass=clamp(bands?.bass,0,1,0),mid=clamp(bands?.mid,0,1,0);
+ const high=clamp(bands?.high,0,1,0),beat=clamp(bands?.beat,0,1,0);
+ return {scale:1+wet*(.16*bass+.18*beat),turn:wet*(.12*mid+.06*beat),
+  glow:1+wet*(.8*high+.6*beat),opacity:1+wet*(.3*high+.2*beat)};
+}
+function layerPose(l,i,recipe,seconds,bands){
+ const fx=audioEffect(recipe,bands),direction=i%2?-1:1;
+ return {angle:l.angle*Math.PI/180+seconds*recipe.motion*Math.PI/180*l.speed*direction+fx.turn*direction,
+   scale:fx.scale,glow:fx.glow,opacity:Math.min(1,l.opacity*(i===recipe.selected?1:.8)*fx.opacity)};
+}
+// Self-contained, script-free SVG snapshot. Canvas2D and SVG share the same paths.
+function svgSnapshot(raw,seconds=0,width=1200,height=1200,bands=null){
+ const recipe=sanitizeRecipe(raw),w=int(width,128,4096,1200),h=int(height,128,4096,1200);
+ const fmt=n=>String(Number(n.toFixed(5))),base=Math.min(w,h)*.455;
+ const background=recipe.background==='parchment'?'#f2e8d6':recipe.background==='midnight'?'#050b22':'#08080e';
+ const center=recipe.background==='parchment'?'#f2e8d6':recipe.background==='midnight'?'#17223d':'#251b25';
+ const stops=recipe.background==='parchment'?'':'<defs><radialGradient id="field" cx="50%" cy="50%" r="75%"><stop offset="0%" stop-color="'+center+'"/><stop offset="100%" stop-color="#05060b"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#field)"/>';
+ const items=recipe.layers.map((l,i)=>{
+  if(!l.visible)return '';
+  const p=layerPose(l,i,recipe,Number.isFinite(seconds)?seconds:0,bands);
+  const scale=base*p.scale,rotation=fmt(p.angle*180/Math.PI);
+  const stroke=recipe.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
+  const paths=geometry(l).map(({points,closed})=>{
+   if(points.length<2)return '';
+   const d='M'+points.map(p=>fmt(p[0])+' '+fmt(p[1])).join('L')+(closed?'Z':'');
+   return '<path d="'+d+'"/>';
+  }).join('');
+  return '<g transform="translate('+fmt(w/2)+' '+fmt(h/2)+') rotate('+rotation+') scale('+fmt(scale)+')" fill="none" stroke="'+stroke+'" stroke-opacity="'+fmt(p.opacity)+'" stroke-width="'+fmt((i===recipe.selected?1.8:1.15)/base)+'" stroke-linejoin="round" stroke-linecap="round">'+paths+'</g>';
+ }).join('');
+ return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img">\n<title>PhiMath Atelier Geometry</title>\n<desc>Original Euclidean and parametric geometry; current animation-frame vector snapshot.</desc>\n<rect width="100%" height="100%" fill="'+background+'"/>'+stops+items+'</svg>';
+}
+
 const css=[
  '.geometry-lab{border:1px solid #78614a;border-radius:15px;background:linear-gradient(160deg,#292016,#111722);padding:14px;margin:15px 0 24px}',
  '.geometry-lab h2{margin:0 0 6px;color:#f5d49d;font:21px Georgia,serif}',
@@ -122,6 +159,7 @@ const css=[
  '.geometry-lab .gl-equation{margin:11px 0;background:#101421;border:1px solid #474251;color:#e0d7c9;border-radius:10px;padding:10px;line-height:1.55;font:12px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}',
  '.geometry-lab .gl-warn{margin-top:12px;color:#aeb1c3;font-size:10px;line-height:1.5}',
  '.geometry-lab .gl-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}',
+ '.geometry-lab .gl-meter{color:#ebc786;font:11px ui-monospace,monospace;padding:6px 9px;background:#101420;border-radius:8px}',
  '#geometryCanvas{position:absolute;inset:0;z-index:2;width:100%;height:100%;touch-action:manipulation;cursor:crosshair}',
  '#geometryCanvas[hidden]{display:none}',
  '.stage.geometry-active .overlay-top,.stage.geometry-active .overlay-bottom{display:none}',
@@ -154,11 +192,15 @@ function create({root,canvas,stage}){
  '<label class="gl-row"><span><input id="glVisible" type="checkbox" checked> Layer visible</span></label>',
  '<div class="gl-note">Exact construction of selected layer:</div><div class="gl-equation" id="glEquation" aria-live="polite"></div>',
  '<label class="gl-row">Global rotation: <output id="glMotionOut"></output><input id="glMotion" type="range" min="0" max="120" step="1"></label>',
+ '<label class="gl-row"><span><input id="glAudio" type="checkbox"> React to VJ LAB audio levels</span></label>',
+ '<label class="gl-row">Audio response intensity: <output id="glWetOut">75%</output><input id="glWet" type="range" min="0" max="100" step="5" value="75"></label>',
+ '<p class="gl-note">Bass pulses size; mids bend rotation; highs and beats brighten. Start a signal in VJ LAB below. No separate audio permission.</p>',
+ '<div id="glMeter" class="gl-meter" role="status" aria-live="off">B 0 · M 0 · H 0 · BEAT 0</div>',
  '<label class="gl-row">Background<select id="glBg"><option value="ink">Arcane ink</option><option value="midnight">Nebula midnight</option><option value="parchment">Warm parchment</option></select></label>',
  '<div class="gl-two"><button type="button" id="glPause">Ⅱ Pause motion</button><button type="button" id="glReset">↺ Reset preset</button></div>',
- '<div class="gl-actions"><button type="button" id="glPNG">↓ Geometry PNG</button><button type="button" id="glJSON">↓ Recipe JSON</button><button type="button" id="glImport">↑ Import recipe</button><button type="button" id="glFullscreen">⛶ Fullscreen stage</button></div>',
+ '<div class="gl-actions"><button type="button" id="glPNG">↓ Geometry PNG</button><button type="button" id="glSVG">↓ Vector SVG</button><button type="button" id="glJSON">↓ Recipe JSON</button><button type="button" id="glImport">↑ Import recipe</button><button type="button" id="glFullscreen">⛶ Fullscreen stage</button></div>',
  '<input id="glFile" type="file" accept=".json,application/json" hidden>',
- '<p class="gl-warn">Uses its own Canvas2D stage and exports, separate from the five GPU worlds and dual-deck recorder. Recipes contain geometry only. Original artwork remains untouched.</p>',
+ '<p class="gl-warn">Geometry uses its own Canvas2D stage. Audio changes draw-time transforms, not saved layers. SVG exports a vector frame. Existing GPU worlds and deck captures stay separate.</p>',
  '<p id="glStatus" class="gl-note" role="status" aria-live="polite">Click a layer or one of its visible strokes to inspect the construction.</p>',
  '</div>'
  ].join('');
@@ -166,7 +208,7 @@ function create({root,canvas,stage}){
  label.className='gl-stage-label';label.hidden=true;
  label.innerHTML='◇ Sacred Geometry Laboratory<span>Click a line to select its mathematical layer · 100% locally generated</span>';
  stage.append(label);
- let state=initial(),active=false,clock=0,last=0,raf=0,buffer=new Map();
+ let state=initial(),active=false,clock=0,last=0,raf=0,lastMeter=0,buffer=new Map();
  const context=canvas.getContext('2d');
  if(!context){$('glGo').disabled=true;$('glGo').textContent='Canvas2D unavailable';return null;}
  const save=()=>{try{localStorage.setItem('phimath-geometry-v1',JSON.stringify(state));}catch(_){}};
@@ -176,8 +218,8 @@ function create({root,canvas,stage}){
   if(!buffer.has(key))buffer.set(key,geometry(l));
   return buffer.get(key);
  }
- function angle(l,i){return l.angle*Math.PI/180+(state.paused?clock:clock)*state.motion*Math.PI/180*l.speed*(i%2?-1:1);}
- function paint(ctx,w,h){
+ function readBands(){try{return typeof global.PhiAtelierAudioLevels==='function'?global.PhiAtelierAudioLevels():null;}catch(_){return null;}}
+ function paint(ctx,w,h,bands=readBands()){
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,w,h);
   const dark=state.background!=='parchment',min=Math.min(w,h);
@@ -191,11 +233,12 @@ function create({root,canvas,stage}){
   const scale=min*.455;
   for(let i=0;i<state.layers.length;i++){
    const l=state.layers[i];if(!l.visible)continue;
-   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle(l,i));ctx.scale(scale,scale);
+   const pose=layerPose(l,i,state,clock,bands);
+   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(pose.angle);ctx.scale(scale*pose.scale,scale*pose.scale);
    ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=(i===state.selected?1.8:1.15)/scale;
    ctx.strokeStyle=state.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
-   ctx.shadowColor=l.color;ctx.shadowBlur=dark?11:0;
-   ctx.globalAlpha=l.opacity*(i===state.selected?1:.8);
+   ctx.shadowColor=l.color;ctx.shadowBlur=dark?11*pose.glow:0;
+   ctx.globalAlpha=pose.opacity;
    for(const line of drawPaths(l)){
     const pts=line.points;if(pts.length<2)continue;
     ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
@@ -218,7 +261,9 @@ function create({root,canvas,stage}){
  function frame(now){
   if(!active)return;
   if(last&&!state.paused)clock+=Math.min(.08,Math.max(0,(now-last)/1000));
-  last=now;resize();paint(context,canvas.width,canvas.height);
+  last=now;resize();const bands=readBands();paint(context,canvas.width,canvas.height,bands);
+  if(now-lastMeter>120){lastMeter=now;const v=k=>Math.round(100*clamp(bands?.[k],0,1,0));
+   $('glMeter').textContent='B '+v('bass')+' · M '+v('mid')+' · H '+v('high')+' · BEAT '+v('beat');}
   raf=requestAnimationFrame(frame);
  }
  function activate(next){
@@ -247,6 +292,7 @@ function create({root,canvas,stage}){
   $('glColor').value=l.color;$('glVisible').checked=l.visible;
   $('glMotion').value=state.motion;$('glMotionOut').textContent=state.motion+'°/s';
   $('glBg').value=state.background;$('glPause').textContent=state.paused?'▶ Resume motion':'Ⅱ Pause motion';
+  $('glAudio').checked=state.audio.enabled;$('glWet').value=Math.round(state.audio.wet*100);$('glWetOut').textContent=Math.round(state.audio.wet*100)+'%';
   $('glEquation').textContent=equation(l);
   $('glStep').disabled=l.type!=='star';$('glDepth').disabled=l.type!=='flower';$('glTurns').disabled=l.type!=='spiral';
   $('glN').disabled=l.type==='flower'||l.type==='metatron';
@@ -268,15 +314,17 @@ function create({root,canvas,stage}){
  $('glRemove').addEventListener('click',()=>{if(state.layers.length<=1)return;state.layers.splice(state.selected,1);state.selected=Math.min(state.selected,state.layers.length-1);sync();save();});
  $('glMotion').addEventListener('input',e=>{state.motion=Number(e.target.value);sync();save();});
  $('glBg').addEventListener('change',e=>{state.background=e.target.value;sync();save();});
+ $('glAudio').addEventListener('change',e=>{state.audio.enabled=e.target.checked;sync();save();status(state.audio.enabled?'VJ LAB response enabled. Start a signal in VJ LAB.':'Audio response bypassed.');});
+ $('glWet').addEventListener('input',e=>{state.audio.wet=Number(e.target.value)/100;sync();save();});
  $('glPause').addEventListener('click',()=>{state.paused=!state.paused;sync();save();});
  $('glReset').addEventListener('click',()=>{state.layers=preset($('glPreset').value);state.selected=0;clock=0;buffer.clear();sync();save();});
  canvas.addEventListener('pointerdown',event=>{
   if(!active)return;
   const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*canvas.width/rect.width,y=(event.clientY-rect.top)*canvas.height/rect.height;
-  const scale=Math.min(canvas.width,canvas.height)*.455,threshold=Math.pow(11/scale,2);
+  const scale=Math.min(canvas.width,canvas.height)*.455,threshold=Math.pow(11/scale,2),bands=readBands();
   for(let i=state.layers.length-1;i>=0;i--){
    const l=state.layers[i];if(!l.visible)continue;
-   const a=-angle(l,i),px=(x-canvas.width/2)/scale,py=(y-canvas.height/2)/scale;
+   const pose=layerPose(l,i,state,clock,bands),a=-pose.angle,px=(x-canvas.width/2)/(scale*pose.scale),py=(y-canvas.height/2)/(scale*pose.scale);
    const lx=px*Math.cos(a)-py*Math.sin(a),ly=px*Math.sin(a)+py*Math.cos(a);
    let found=false;
    for(const line of drawPaths(l)){
@@ -295,10 +343,12 @@ function create({root,canvas,stage}){
   const w=Math.max(2,canvas.width),h=Math.max(2,canvas.height);
   const gain=Math.min(2.5,Math.sqrt(5000000/(w*h)));
   const exportCanvas=document.createElement('canvas');exportCanvas.width=Math.round(w*gain);exportCanvas.height=Math.round(h*gain);
-  paint(exportCanvas.getContext('2d'),exportCanvas.width,exportCanvas.height);
+  paint(exportCanvas.getContext('2d'),exportCanvas.width,exportCanvas.height,readBands());
   exportCanvas.toBlob(blob=>{if(blob){download(blob,filename('png'));status('Geometry PNG saved.');}else status('PNG export unavailable in this browser.');},'image/png');
  });
- $('glJSON').addEventListener('click',()=>{download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'0.5.0',geometry:state},null,2)],{type:'application/json'}),filename('json'));status('Geometry-only recipe exported.');});
+ $('glSVG').addEventListener('click',()=>{const text=svgSnapshot(state,clock,1600,1600,readBands());
+  download(new Blob([text],{type:'image/svg+xml;charset=utf-8'}),filename('svg'));status('Editable SVG vector snapshot exported.');});
+ $('glJSON').addEventListener('click',()=>{download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'0.6.0',geometry:state},null,2)],{type:'application/json'}),filename('json'));status('Geometry recipe exported.');});
  $('glImport').addEventListener('click',()=>$('glFile').click());
  $('glFile').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;
   try{if(file.size>120000)throw Error('recipe too large');
@@ -311,7 +361,7 @@ function create({root,canvas,stage}){
  sync();
  return {activate,getState:()=>JSON.parse(JSON.stringify(state)),setState:raw=>{state=sanitizeRecipe(raw);buffer.clear();sync();save();}};
 }
-global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,create,PHI};
+global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,svgSnapshot,audioEffect,layerPose,create,PHI};
 if(typeof document!=='undefined'){
  const mount=()=>{const root=document.getElementById('geometryLab'),canvas=document.getElementById('geometryCanvas'),stage=document.getElementById('stage');
   if(root&&canvas&&stage){try{global.PhiGeometryLab.instance=create({root,canvas,stage});}catch(e){console.error('Geometry lab:',e);}}
