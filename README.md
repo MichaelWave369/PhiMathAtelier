@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.3.0.
+**A Living Equation Studio**, v0.4.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, and `vj-lab.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, and `deck-mixer.js` must be present in the same folder.
 
 ## Launch
 
@@ -18,7 +18,7 @@ No npm install or build step is needed.
 
 ## Verify the source
 
-Run `node tests/smoke.mjs` and `node tests/vj-lab.mjs` with Node.js 22 or later to validate the standalone JavaScript, expected UI controls, five modes, six palettes and export features. The workflow also runs on pull requests.
+Run `node tests/smoke.mjs`, `node tests/vj-lab.mjs`, and `node tests/deck-mixer.mjs` with Node.js 22 or later to validate the standalone JavaScript, expected UI controls, five modes, six palettes and export features. The workflow also runs on pull requests.
 
 ## Controls
 
@@ -126,6 +126,31 @@ Atelier rejects postMessage from any origin other than the configured sender. Fr
 
 WebGL is preferred, but the Canvas2D fallback accepts the same effective modulation. Audio capture and MIDI require explicit user permission and browser support, typically over HTTPS. All captured audio tracks are stopped on source change or Stop input; local file Object URLs are revoked.
 
+## Dual-Deck Visual Mixer · v0.4.0
+
+ΦMath Atelier now supports **two simultaneously rendered mathematical worlds** and live visual DJ transitions.
+
+- **Deck A:** the existing world and its controls, unchanged.
+- **Deck B:** an independent world, palette, seed, Chromatic Warp pattern, density, harmonics, deformation, luminosity, and zoom.
+- **Three transitions:** Smooth Blend, Left-to-Right Wipe and Expanding Iris.
+- **Performance controls:** visual A/B crossfader, Copy A → B, Random B, Swap A ↔ B; use `[` and `]` keys to nudge the visual mix by 5%.
+- **MIDI integration:** VJ LAB's MIDI Learn dropdown includes **Deck A/B visual crossfader**; learn a controller CC to sweep the transition.
+- **Audio reaction:** both procedural decks receive the same optional VJ LAB band modulation, so you can crossfade between two audio-responsive worlds.
+- **Recipes:** save/import JSON and state URL now carry an independent `mixer` object with enabled flag, transition, fader position and Deck B settings. Importing older v0.1–0.3 recipes disables the mixer and retains the original single-deck experience.
+- **Visual exports:** PNG and the existing 8-second silent WebM recorder capture the composited stage, including A/B transitions.
+
+The dual-deck feature is **off by default**. Enable it in the new left-sidebar mixer section. The artist's original single-deck output remains untouched until the user enables mixing. WebGL renders both source scenes into independent framebuffer textures at reduced source resolution, then composites them to the stage. Canvas2D renders both to offscreen canvases and composites with clipping or alpha blending. The mix remains a visual effect; audio playback and audio crossfading belong to the DJ deck/source, not the visual mixer.
+
+### First test after merging
+
+1. Open the live GitHub Pages site and select **Chromatic Warp** for Deck A.
+2. Scroll to **Dual-Deck Visual Mixer**, enable it, then set Deck B to **Nested Foam**.
+3. Move the A/B crossfader and try Wipe and Iris transitions.
+4. Start the VJ LAB demo beat (or load a local song) and watch both worlds react to the same signal.
+5. Export a PNG, save a recipe, reload it, and confirm the A/B scene restores.
+
+Two full-screen equation renders are more expensive than one. The mixer scales its offscreen sources to ~70% of display dimensions to keep interactive performance reasonable. WebGL output and projector behavior require additional real-browser verification; the automated CI suite validates source syntax, normalization, controls and renderer integration.
+
 ## Developer notes
 
 - Core GLSL is in `<script id="fragmentShader">` inside `index.html`. Chromatic Warp's shaders and Canvas fallback live in `chromatic-warp.js` and are injected into the existing shader at initialization.
@@ -134,7 +159,7 @@ WebGL is preferred, but the Canvas2D fallback accepts the same effective modulat
 - Tested in an automated headless browser using the Canvas2D fallback. GPU shader rendering could not be validated in that restricted environment.
 - Each JSON recipe can reproduce the same **static** composition with the same engine version and settings. Animated output depends on elapsed time and device frame timing.
 - All computation is local. The app does not transmit artwork, recipes, or usage data.
-- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow deploys all three files.
+- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow deploys all four files.
 
 ## Research distinction
 

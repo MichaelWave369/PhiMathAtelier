@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.3 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.4 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -87,6 +87,7 @@
       <button type="button" class="btn" id="acidNext" style="width:100%">↝ Next mathematical scene</button>
       <p class="desc">The pattern is calculated once; its indexed colors flow. Speed is controlled by <strong>Time flow</strong>. Your palette choice also applies.</p>
     </section>
+    <section class="section deck-mixer" id="deckMixer" aria-label="Two-deck visual crossfader"></section>
     <section class="section vj-lab" id="vjLab" aria-label="Live mathematical visual synthesizer"></section>
     <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
       <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
@@ -95,7 +96,7 @@
   <main class="stage" id="stage" aria-label="Live mathematical artwork">
     <canvas id="art" aria-label="Procedural mathematical visualization. Controls are in the left panel."></canvas>
     <div class="overlay-top"><div class="glass"><div class="arttitle" id="stageTitle">The Unwritten Cosmos</div><div class="artsub" id="stageSub">Galaxy Cluster / Equation 01</div></div><div class="glass chip"><span class="dot"></span>LIVE GPU RENDER</div></div>
-    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–5 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
+    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–5 worlds · [ / ] deck mix · S PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
   </main>
   <aside class="panel right" aria-label="Mathematics and export">
     <section class="section"><div class="smallcaps">Behind the artwork</div><h1 class="big-label" id="mathTitle">A universe without a photograph.</h1><p class="intro" id="mathIntro">Every visible galaxy is synthesized from equations, without a single photograph.</p><div class="smallcaps">Conceptual equation</div><div class="equation" id="equation" aria-label="Artwork equation">L = Σᵢ exp(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln rᵢ + φᵢ)]</div><div class="desc" id="mathDesc">Radial falloff creates halos. Angular phase creates arms. A seed chooses galaxy positions, tilts and sizes.</div></section>
@@ -109,7 +110,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.3.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.4.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -283,6 +284,7 @@ void main(){
 </script>
 <script src="chromatic-warp.js"></script>
 <script src="vj-lab.js"></script>
+<script src="deck-mixer.js"></script>
 <script>
 (()=>{
  'use strict';
@@ -297,8 +299,13 @@ void main(){
   {title:'Chromatic Warp',sub:'Chromatic Warp / Equation 05',mathTitle:'A pattern stands still. Its colors travel.',intro:'Inspired by classic 1992-era mathematical color cycling: index the geometry, then rotate a palette.',eq:'I(x,y) = ½ + 0.26 sin f(x,y) + 0.24 cos g(x,y)\nC(x,y,t) = P[⌊B · fract(I(x,y) + vt)⌋ / B]',desc:'Six original <strong>polar, wave, and interference fields</strong> yield a stationary 8-bit index field. The animated palette makes bands appear to flow. Inspired by the technique of AcidWarp, not a port or reproduction of its original formulas.'}
  ];
  const canvas=$('art'), stage=$('stage');
- const vj=window.PhiVJLab.create({root:$('vjLab'),stage,canvas});
- let gl, ctx2d, prog, buffer, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
+ const mixer=window.PhiDeckMixer.create({
+  root:$('deckMixer'),getA:()=>state,
+  onSwap:next=>{const old={...state};Object.assign(state,next);updateUI();return old;},
+  onChange:()=>{if(gl||ctx2d)draw();}
+ });
+ const vj=window.PhiVJLab.create({root:$('vjLab'),stage,canvas,onCrossfade:v=>mixer.setCrossfade(v)});
+ let gl, ctx2d, prog, buffer, sceneAttrib, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
  let pointer={x:0,y:0,inside:false};
  let toastTimer, autoElapsed=0;
  function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3300);}
@@ -312,7 +319,7 @@ void main(){
   prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,$('vertexShader').textContent));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,shaderSource));gl.linkProgram(prog);
   if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));
   gl.useProgram(prog); buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-  const at=gl.getAttribLocation(prog,'a_position');gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,2,gl.FLOAT,false,0,0);
+  sceneAttrib=gl.getAttribLocation(prog,'a_position');gl.enableVertexAttribArray(sceneAttrib);gl.vertexAttribPointer(sceneAttrib,2,gl.FLOAT,false,0,0);
   ['resolution','mouse','time','seed','density','spiral','warp','glow','zoom','pointer','mode','palette','acidPattern','acidBands','acidCycle'].forEach(k=>uni[k]=gl.getUniformLocation(prog,'u_'+k));
   gl.disable(gl.DEPTH_TEST);
  }
@@ -321,11 +328,11 @@ void main(){
  // gives browsers without GPU acceleration an attractive, fully offline experience.
  const colorSchemes=[['#9b74ec','#ffaaca','#ffe4ae'],['#568dff','#64e1ff','#e0fbff'],['#4bcdab','#b4e3c8','#fff0af'],['#ee658d','#ff9f62','#ffe49b'],['#93a8cd','#d5dbf1','#ffffff'],['#e55bf5','#22e1bc','#fff281']];
  function rng(seed){let x=(seed|0)||369;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967295;};}
- function drawCPU(){
-  if(!ctx2d)return;
-  const live=vj.effective(state);
+ function drawCPU(deck=state,targetCtx=ctx2d,targetCanvas=canvas){
+  if(!targetCtx)return;
+  const live=vj.effective(deck);
    if(live.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
-  const c=ctx2d,w=canvas.width,h=canvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[live.palette];
+  const c=targetCtx,w=targetCanvas.width,h=targetCanvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[live.palette];
   const r=rng(live.seed+19),dens=live.density/100,warp=live.warp/100,spiral=live.spiral/100,lum=live.glow/100,zoom=live.zoom/100;
   c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
   const bg=c.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,k*.82);bg.addColorStop(0,'#171024');bg.addColorStop(.5,'#090a17');bg.addColorStop(1,'#04050a');c.globalAlpha=.9;c.fillStyle=bg;c.fillRect(0,0,w,h);c.globalAlpha=1;
@@ -417,11 +424,13 @@ void main(){
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
   if(gl)gl.viewport(0,0,w,h);resizeNeeded=false;
  }
- function draw(){
-  if(!gl){drawCPU();return;}
-  const live=vj.effective(state);
+ function renderSceneGL(deck,framebuffer=null,w=canvas.width,h=canvas.height){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.viewport(0,0,w,h);
+  const live=vj.effective(deck);
   gl.useProgram(prog);
-  gl.uniform2f(uni.resolution,canvas.width,canvas.height);
+  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(sceneAttrib);
+  gl.vertexAttribPointer(sceneAttrib,2,gl.FLOAT,false,0,0);
+  gl.uniform2f(uni.resolution,w,h);
   const r=canvas.getBoundingClientRect();
   gl.uniform2f(uni.mouse,((pointer.x/r.width)-.5)*canvas.width/canvas.height,(.5-(pointer.y/r.height)));
   gl.uniform1f(uni.time,playingTime);
@@ -435,6 +444,23 @@ void main(){
   gl.uniform1i(uni.mode,live.mode);gl.uniform1i(uni.palette,live.palette);
    gl.uniform1i(uni.acidPattern,live.acidPattern);gl.uniform1f(uni.acidBands,live.acidBands);gl.uniform1f(uni.acidCycle,live.acidCycle?1:0);
   gl.drawArrays(gl.TRIANGLES,0,6);
+ }
+
+ function draw(){
+  if(!gl){
+   if(mixer.enabled)mixer.drawCPU(ctx2d,canvas,(deck,ctx,targetCanvas)=>drawCPU(deck,ctx,targetCanvas));
+   else drawCPU();
+   return;
+  }
+  if(mixer.enabled){
+   try{mixer.drawGL(gl,canvas,renderSceneGL);}
+   catch(error){
+    console.error('Dual-deck graphics fallback:',error);
+    mixer.disable();
+    toast('Dual-deck GPU renderer unavailable. Single-deck artwork restored.');
+    renderSceneGL(state);
+   }
+  }else renderSceneGL(state);
  }
  function updateUI(){
   document.querySelectorAll('.mode').forEach(b=>{const v=+b.dataset.mode;b.classList.toggle('active',v===state.mode);b.setAttribute('aria-pressed',v===state.mode?'true':'false');});
@@ -464,9 +490,9 @@ void main(){
    if(typeof obj.acidCycle==='boolean')state.acidCycle=obj.acidCycle;
    if(typeof obj.acidAuto==='boolean')state.acidAuto=obj.acidAuto;
    autoElapsed=0;
-  playingTime=0;updateUI();if(gl||ctx2d)draw();
+  mixer.restore(obj.mixer);playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.3.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'0.4.0',...state,mixer:mixer.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;
@@ -488,7 +514,7 @@ void main(){
    $('acidAuto').addEventListener('change',e=>{state.acidAuto=e.target.checked;autoElapsed=0;});
    $('acidNext').addEventListener('click',()=>{state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();draw();});
   $('shuffle').addEventListener('click',()=>{state.seed=1+Math.floor(Math.random()*999999);playingTime=0;updateUI();draw();toast('A new mathematical universe has been seeded');});
-  $('reset').addEventListener('click',()=>{Object.assign(state,defaults);playingTime=0;updateUI();draw();toast('Equation parameters restored');});
+  $('reset').addEventListener('click',()=>{Object.assign(state,defaults);mixer.restore();playingTime=0;updateUI();draw();toast('Equation parameters restored');});
   $('pause').addEventListener('click',()=>{state.paused=!state.paused;updateUI();});
   $('export').addEventListener('click',exportPNG);
   $('saveRecipe').addEventListener('click',()=>{download(new Blob([JSON.stringify(recipe(),null,2)],{type:'application/json'}),`phimath-${state.seed}.json`);toast('Equation recipe saved');});
@@ -502,7 +528,9 @@ void main(){
    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
    if(e.code==='Space'){e.preventDefault();$('pause').click();}
    else if(e.key.toLowerCase()==='r')$('shuffle').click();
-   else if(e.key.toLowerCase()==='s'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();$('export').click();}
+   else if(e.key==='['){e.preventDefault();mixer.nudge(-5);}
+    else if(e.key===']'){e.preventDefault();mixer.nudge(5);}
+    else if(e.key.toLowerCase()==='s'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();$('export').click();}
    else if('12345'.includes(e.key)&&e.key.length===1){state.mode=Number(e.key)-1;updateUI();draw();}
   });
   $('record').addEventListener('click',record);

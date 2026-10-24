@@ -55,7 +55,7 @@
  '.stage:fullscreen{background:#000}.stage:fullscreen canvas{width:100vw;height:100vh}'
  ].join('\n');
 
- function create({root,stage,canvas}){
+ function create({root,stage,canvas,onCrossfade}){
   if(!root||!stage||!canvas)throw Error('VJ LAB requires a panel, stage and art canvas.');
   const style=document.createElement('style');style.textContent=stylesheet;document.head.append(style);
   root.innerHTML=[
@@ -77,7 +77,7 @@
    ...['bass','mid','high'].map(k=>'<label>'+k.toUpperCase()+'<input id="vjManual-'+k+'" type="range" min="0" max="100" value="0"></label>'),
    '</div><button id="vjPulse" type="button" style="width:100%;margin-top:8px">⚡ Inject beat</button></div>',
    '<div class="vj-buttons"><button id="vjMIDI" type="button">🎹 Connect MIDI</button><button id="vjFullscreen" type="button">⛶ Fullscreen stage</button></div>',
-   '<label class="vj-field">MIDI knob learn<select id="vjMidiTarget"><option value="wet">Master modulation</option><option value="bass">Bass depth</option><option value="mid">Mid depth</option><option value="high">High depth</option></select></label>',
+   '<label class="vj-field">MIDI knob learn<select id="vjMidiTarget"><option value="wet">Master modulation</option><option value="bass">Bass depth</option><option value="mid">Mid depth</option><option value="high">High depth</option><option value="crossfade">Deck A/B visual crossfader</option></select></label>',
    '<button id="vjLearn" type="button" style="width:100%">Learn next MIDI CC</button>',
    '<div class="vj-footer"><label class="vj-field">Allowed bridge origin (optional)<input id="vjOrigin" type="text" placeholder="https://trusted-bridge.example" spellcheck="false"></label>',
    '<div class="vj-desc">BackSpin96 bridge accepts normalized 0–1 bands via <code>PhiVJLab.pushFrame()</code> locally, a same-origin BroadcastChannel, or postMessage from an explicitly allowed origin. Audio is never uploaded.</div></div>'
@@ -219,6 +219,10 @@
    }
    for(const [target,mapped] of Object.entries(midiBindings)){
     if(mapped!==cc)continue;
+    if(target==='crossfade'){
+     if(typeof onCrossfade==='function')onCrossfade(value);
+     continue;
+    }
     const id=target==='wet'?'vjWet':'vjDepth-'+target;
     el(id).value=Math.round(value*(target==='wet'?100:150));
     el('vjPreset').value='custom';updateDepth();

@@ -10,7 +10,7 @@ assert.match(html, /<canvas\s+id="art"/);
 assert.match(html, /<\/html>/i);
 
 const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-assert.equal(scripts.length,5,'two GLSL shaders, two external renderers and a controller expected');
+assert.equal(scripts.length,6,'two GLSL shaders, three external renderers and a controller expected');
 const controller=scripts.filter(m=>!/x-shader/.test(m[1])&&!/src=/.test(m[1]));
 assert.equal(controller.length,1,'one application controller expected');
 new vm.Script(controller[0][2],{filename:'atelier-inline.js'});
@@ -74,5 +74,6 @@ warp.draw(screen,canvas,state,1);
 assert.deepEqual(drawn,paused,'disabled palette cycling should freeze colors');
 
 assert.ok(html.includes('src="vj-lab.js"'),'Missing VJ LAB loader');
+assert.ok(html.includes('src="deck-mixer.js"'),'Missing dual-deck mixer loader');
 assert.ok(html.includes('id="vjLab"'),'Missing VJ LAB mount point');
 console.log('PASS: five modes, six palettes, two optional engines, JS syntax, six procedural fields, palette cycling and pause.');
