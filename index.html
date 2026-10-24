@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080910">
-<meta name="description" content="PhiMath Atelier: a standalone GPU-powered mathematical art engine with galaxies, nested foam, interference, and golden-angle blooms.">
+<meta name="description" content="PhiMath Atelier: a standalone GPU-powered mathematical art engine with galaxies, nested foam, interference, golden-angle blooms and color-cycling warps.">
 <title>ΦMath Atelier · A Living Equation Studio</title>
 <style>
   :root{color-scheme:dark;--bg:#080910;--panel:#10121c;--panel2:#161924;--border:#272b39;--muted:#9196a9;--text:#f4f0ec;--gold:#efc184;--gold2:#f8dec0;--r:17px;--font:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
@@ -27,6 +27,7 @@
   .foot{grid-column:1/-1;border-top:1px solid var(--border);background:#0d0e16;display:flex;align-items:center;gap:16px;padding:0 22px;color:#9b9cae;font-size:11px;min-width:0}.foot b{color:#cfac81;font-weight:650}.foot .spacer{flex:1}.foot a{color:#bca185;text-decoration:none}.foot a:hover{text-decoration:underline}.foot .seed{font-variant-numeric:tabular-nums;color:#d4b493}
   .toast{position:fixed;bottom:72px;left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;color:#f5efe6;background:#262331;border:1px solid #887156;box-shadow:0 10px 40px #0008;border-radius:11px;padding:11px 16px;font-size:12px;transition:.2s;z-index:30;text-align:center;max-width:calc(100vw - 28px)}.toast.show{opacity:1;transform:translate(-50%,0)}
   .error{position:absolute;top:30%;max-width:400px;padding:24px;background:#27191d;color:#f1cfbc;border:1px solid #954f54;border-radius:14px;line-height:1.65;text-align:center}
+  .warp-extras[hidden]{display:none}.warp-extras select{width:100%;margin-top:9px;background:#191b2a;color:#f0e7df;border:1px solid #5b5166;border-radius:9px;padding:10px}.warp-extras select:focus-visible{outline:2px solid var(--gold)}
   @media(max-width:1200px){.app{grid-template-columns:242px minmax(0,1fr) 248px}.panel{padding:18px 13px}.top-note{display:none}}
   @media(max-width:850px){.app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:minmax(0,1fr);grid-template-rows:65px minmax(390px,60vh) auto auto 55px}.topbar{grid-column:1;grid-row:1}.stage{grid-column:1;grid-row:2}.left{grid-column:1;grid-row:3;border-right:0;border-top:1px solid var(--border);overflow:visible}.right{grid-column:1;grid-row:4;border-left:0;border-top:1px solid var(--border);overflow:visible}.foot{grid-column:1;grid-row:5}.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:19px 20px}.ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.swatch{width:36px;height:36px}.topbar{padding:0 14px}.topbar .pill{display:none}}
   @media(max-width:540px){.stage{min-height:390px}.overlay-top{left:12px;top:12px;right:12px}.overlay-bottom{left:12px;bottom:12px;right:12px}.arttitle{font-size:16px}.glass{padding:8px 10px}.keyhints{display:none}.foot{padding:0 13px;gap:8px;font-size:10px}.foot .hide-sm{display:none}.ranges{grid-template-columns:1fr}.panel{padding:20px 15px}}
@@ -38,15 +39,16 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.1 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.2 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
-    <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>4 engines</span></div>
+    <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
       <div class="modes" id="modes">
         <button class="mode active" data-mode="0" aria-pressed="true"><span class="ico">✧</span><span><strong>Galaxy Cluster</strong><small>Analytic spiral luminosity</small></span></button>
         <button class="mode" data-mode="1" aria-pressed="false"><span class="ico">◎</span><span><strong>Nested Foam</strong><small>Bubbles, pressure & grids</small></span></button>
         <button class="mode" data-mode="2" aria-pressed="false"><span class="ico">≋</span><span><strong>Resonance Field</strong><small>Wave interference</small></span></button>
         <button class="mode" data-mode="3" aria-pressed="false"><span class="ico">❋</span><span><strong>Golden Bloom</strong><small>Phyllotaxis & harmonics</small></span></button>
+        <button class="mode" data-mode="4" aria-pressed="false"><span class="ico">◉</span><span><strong>Chromatic Warp</strong><small>AcidWarp-inspired color cycling</small></span></button>
       </div>
     </section>
     <section class="section"><div class="section-head"><span class="smallcaps">02 / Light palette</span></div>
@@ -56,6 +58,7 @@
         <button class="swatch" data-palette="2" title="Bioluminescent" aria-label="Bioluminescent" aria-pressed="false" style="background:linear-gradient(135deg,#082e3e,#38a78f 60%,#e6e1ab)"></button>
         <button class="swatch" data-palette="3" title="Solar Flare" aria-label="Solar Flare" aria-pressed="false" style="background:linear-gradient(135deg,#51233c,#d65c58 55%,#f9c469)"></button>
         <button class="swatch" data-palette="4" title="Silver Ghost" aria-label="Silver Ghost" aria-pressed="false" style="background:linear-gradient(135deg,#1d2941,#7b90b7 50%,#f2eee7)"></button>
+        <button class="swatch" data-palette="5" title="VGA Spectrum" aria-label="VGA Spectrum" aria-pressed="false" style="background:conic-gradient(#ff4646,#fbef4f,#29e4a2,#366fff,#f347e0,#ff4646)"></button>
       </div>
     </section>
     <section class="section"><div class="section-head"><span class="smallcaps">03 / Equation controls</span></div>
@@ -70,6 +73,20 @@
       <label class="toggle"><input type="checkbox" id="pointer" checked>Interactive gravity lens (move pointer)</label>
       <div class="rowbtn"><button class="btn flex" id="shuffle" type="button">↝ New universe</button><button class="btn flex" id="reset" type="button">↺ Reset</button></div>
     </section>
+    <section class="section warp-extras" id="warpExtras" hidden>
+      <div class="section-head"><span class="smallcaps">Chromatic Warp lab</span><span>Palette cycling</span></div>
+      <label class="range-label" for="acidPattern">Mathematical scene</label>
+      <select id="acidPattern" aria-label="Chromatic Warp mathematical scene">
+        <option value="0">01 · Liquid Rings</option><option value="1">02 · Solar Spokes</option>
+        <option value="2">03 · Twin Wells</option><option value="3">04 · Woven Grid</option>
+        <option value="4">05 · Liquid Moiré</option><option value="5">06 · Kaleido Flower</option>
+      </select>
+      <div class="range-row" style="margin-top:18px"><div class="range-label"><label for="acidBands">Color bands</label><output id="acidBandsOut">16</output></div><input id="acidBands" type="range" min="4" max="48" step="1" value="16"></div>
+      <label class="toggle"><input id="acidCycle" type="checkbox" checked>Cycle colors through fixed geometry</label>
+      <label class="toggle"><input id="acidAuto" type="checkbox">Auto-change scene every 20 seconds</label>
+      <button type="button" class="btn" id="acidNext" style="width:100%">↝ Next mathematical scene</button>
+      <p class="desc">The pattern is calculated once; its indexed colors flow. Speed is controlled by <strong>Time flow</strong>. Your palette choice also applies.</p>
+    </section>
     <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
       <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
     </section>
@@ -77,7 +94,7 @@
   <main class="stage" id="stage" aria-label="Live mathematical artwork">
     <canvas id="art" aria-label="Procedural mathematical visualization. Controls are in the left panel."></canvas>
     <div class="overlay-top"><div class="glass"><div class="arttitle" id="stageTitle">The Unwritten Cosmos</div><div class="artsub" id="stageSub">Galaxy Cluster / Equation 01</div></div><div class="glass chip"><span class="dot"></span>LIVE GPU RENDER</div></div>
-    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–4 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
+    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–5 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
   </main>
   <aside class="panel right" aria-label="Mathematics and export">
     <section class="section"><div class="smallcaps">Behind the artwork</div><h1 class="big-label" id="mathTitle">A universe without a photograph.</h1><p class="intro" id="mathIntro">Every visible galaxy is synthesized from equations, without a single photograph.</p><div class="smallcaps">Conceptual equation</div><div class="equation" id="equation" aria-label="Artwork equation">L = Σᵢ exp(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln rᵢ + φᵢ)]</div><div class="desc" id="mathDesc">Radial falloff creates halos. Angular phase creates arms. A seed chooses galaxy positions, tilts and sizes.</div></section>
@@ -91,7 +108,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.1.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.2.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -123,7 +140,7 @@ vec3 palette(float t){
  else if(u_palette==1){a=vec3(.08,.15,.51);b=vec3(.10,.63,.79);c=vec3(.78,.97,1.0);}
  else if(u_palette==2){a=vec3(.04,.22,.29);b=vec3(.17,.64,.52);c=vec3(.94,.94,.65);}
  else if(u_palette==3){a=vec3(.33,.09,.20);b=vec3(.92,.28,.24);c=vec3(1.0,.83,.36);}
- else{a=vec3(.10,.14,.24);b=vec3(.42,.51,.66);c=vec3(.99,.98,.95);}
+ else if(u_palette==4){a=vec3(.10,.14,.24);b=vec3(.42,.51,.66);c=vec3(.99,.98,.95);}else{a=vec3(.52,.06,.70);b=vec3(.06,.85,.70);c=vec3(1.0,.89,.18);}
  return mix(mix(a,b,smoothstep(0.0,.58,t)),c,smoothstep(.50,1.0,t));
 }
 float stars(vec2 p){
@@ -263,41 +280,47 @@ void main(){
  gl_FragColor=vec4(color,1.0);
 }
 </script>
+<script src="chromatic-warp.js"></script>
 <script>
 (()=>{
  'use strict';
  const $=(id)=>document.getElementById(id);
- const state={mode:0,palette:0,density:72,spiral:140,warp:65,glow:120,zoom:100,speed:35,seed:369,pointer:true,paused:false};
+ const state={mode:0,palette:0,density:72,spiral:140,warp:65,glow:120,zoom:100,speed:35,seed:369,pointer:true,paused:false,acidPattern:0,acidBands:16,acidCycle:true,acidAuto:false};
  const defaults={...state};
  const meta=[
   {title:'The Unwritten Cosmos',sub:'Galaxy Cluster / Equation 01',mathTitle:'A universe without a photograph.',intro:'Every visible galaxy is synthesized from equations, without a single photograph.',eq:'L(x,y) = Σᵢ e^(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln(rᵢ + ε) + φᵢ)]',desc:'<strong>Exponential decay</strong> makes each halo fade. A tightly peaked <strong>angular cosine</strong> creates spiral arms. Each seeded center has its own tilt, scale, and phase.'},
   {title:'The Nested Continuum',sub:'Nested Foam / Equation 02',mathTitle:'Boundaries within boundaries.',intro:'Dozens of independently curved bubble membranes emerge from distance fields and harmonic pressure.',eq:'dᵢ = ‖p − cᵢ‖ − Rᵢ − A sin(kθᵢ + ωt)\nMᵢ = exp[−(dᵢ / σ)²]',desc:'<strong>Signed-distance membranes</strong> form luminous rings. Harmonic distortion bends their surfaces, while a transformed <strong>Cartesian grid</strong> shines through the interiors.'},
   {title:'A Field of Echoes',sub:'Resonance Field / Equation 03',mathTitle:'Where waves meet, patterns appear.',intro:'Independent phase emitters produce interference fringes, bright ridges and dark cancellations.',eq:'Ψ(p,t) = Σᵢ Aᵢ · exp[j(k‖p − cᵢ‖ − ωᵢt + φᵢ)]\nI = |Ψ|²',desc:'Each source contributes a <strong>complex wave</strong>. The GPU shader computes real and imaginary wave components and converts their combined magnitude into color. This is an illustrative interference field, not a quantum-memory device.'},
-  {title:'The Golden Garden',sub:'Golden Bloom / Equation 04',mathTitle:'A flower assembled from numbers.',intro:'One irrational angle repeatedly applied, and a strangely botanical structure starts to emerge.',eq:'θₙ = n · π(3 − √5)\nrₙ = c√n\npₙ = rₙ(cos θₙ, sin θₙ)',desc:'A <strong>golden angle</strong> distributes points across a disk, inspired by phyllotaxis. Layered harmonics and radial falloff turn the arrangement into a luminous mathematical bloom.'}
+  {title:'The Golden Garden',sub:'Golden Bloom / Equation 04',mathTitle:'A flower assembled from numbers.',intro:'One irrational angle repeatedly applied, and a strangely botanical structure starts to emerge.',eq:'θₙ = n · π(3 − √5)\nrₙ = c√n\npₙ = rₙ(cos θₙ, sin θₙ)',desc:'A <strong>golden angle</strong> distributes points across a disk, inspired by phyllotaxis. Layered harmonics and radial falloff turn the arrangement into a luminous mathematical bloom.'},
+  {title:'Chromatic Warp',sub:'Chromatic Warp / Equation 05',mathTitle:'A pattern stands still. Its colors travel.',intro:'Inspired by classic 1992-era mathematical color cycling: index the geometry, then rotate a palette.',eq:'I(x,y) = ½ + 0.26 sin f(x,y) + 0.24 cos g(x,y)\nC(x,y,t) = P[⌊B · fract(I(x,y) + vt)⌋ / B]',desc:'Six original <strong>polar, wave, and interference fields</strong> yield a stationary 8-bit index field. The animated palette makes bands appear to flow. Inspired by the technique of AcidWarp, not a port or reproduction of its original formulas.'}
  ];
  const canvas=$('art'), stage=$('stage');
  let gl, ctx2d, prog, buffer, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
  let pointer={x:0,y:0,inside:false};
- let toastTimer;
+ let toastTimer, autoElapsed=0;
  function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3300);}
  function compile(type,src){const shader=gl.createShader(type);gl.shaderSource(shader,src);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){throw Error(gl.getShaderInfoLog(shader));}return shader;}
  function initGL(){
   gl=canvas.getContext('webgl',{alpha:false,preserveDrawingBuffer:true,antialias:false,depth:false,stencil:false,powerPreference:'high-performance'}) || canvas.getContext('experimental-webgl');
   if(!gl){ctx2d=canvas.getContext('2d',{alpha:false});if(!ctx2d)throw Error('Neither WebGL nor 2D canvas is supported.');document.querySelector('.chip').innerHTML='<span class="dot"></span>LIVE CANVAS RENDER';return;}
-  prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,$('vertexShader').textContent));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,$('fragmentShader').textContent));gl.linkProgram(prog);
+  const shaderSource=$('fragmentShader').textContent
+   .replace('void main(){',window.PhiChromatic.glsl+'\nvoid main(){')
+   .replace('p/=u_zoom;','p/=u_zoom;\n if(u_mode==4){gl_FragColor=vec4(acidWarp(p),1.0);return;}');
+  prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,$('vertexShader').textContent));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,shaderSource));gl.linkProgram(prog);
   if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));
   gl.useProgram(prog); buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
   const at=gl.getAttribLocation(prog,'a_position');gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,2,gl.FLOAT,false,0,0);
-  ['resolution','mouse','time','seed','density','spiral','warp','glow','zoom','pointer','mode','palette'].forEach(k=>uni[k]=gl.getUniformLocation(prog,'u_'+k));
+  ['resolution','mouse','time','seed','density','spiral','warp','glow','zoom','pointer','mode','palette','acidPattern','acidBands','acidCycle'].forEach(k=>uni[k]=gl.getUniformLocation(prog,'u_'+k));
   gl.disable(gl.DEPTH_TEST);
  }
 
  // Canvas2D fallback. The WebGL shader remains the primary engine; this renderer
  // gives browsers without GPU acceleration an attractive, fully offline experience.
- const colorSchemes=[['#9b74ec','#ffaaca','#ffe4ae'],['#568dff','#64e1ff','#e0fbff'],['#4bcdab','#b4e3c8','#fff0af'],['#ee658d','#ff9f62','#ffe49b'],['#93a8cd','#d5dbf1','#ffffff']];
+ const colorSchemes=[['#9b74ec','#ffaaca','#ffe4ae'],['#568dff','#64e1ff','#e0fbff'],['#4bcdab','#b4e3c8','#fff0af'],['#ee658d','#ff9f62','#ffe49b'],['#93a8cd','#d5dbf1','#ffffff'],['#e55bf5','#22e1bc','#fff281']];
  function rng(seed){let x=(seed|0)||369;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967295;};}
  function drawCPU(){
   if(!ctx2d)return;
+   if(state.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
   const c=ctx2d,w=canvas.width,h=canvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[state.palette];
   const r=rng(state.seed+19),dens=state.density/100,warp=state.warp/100,spiral=state.spiral/100,lum=state.glow/100,zoom=state.zoom/100;
   c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
@@ -405,6 +428,7 @@ void main(){
   gl.uniform1f(uni.zoom,state.zoom/100);
   gl.uniform1f(uni.pointer,(pointer.inside&&state.pointer)?1:0);
   gl.uniform1i(uni.mode,state.mode);gl.uniform1i(uni.palette,state.palette);
+   gl.uniform1i(uni.acidPattern,state.acidPattern);gl.uniform1f(uni.acidBands,state.acidBands);gl.uniform1f(uni.acidCycle,state.acidCycle?1:0);
   gl.drawArrays(gl.TRIANGLES,0,6);
  }
  function updateUI(){
@@ -412,6 +436,12 @@ void main(){
   document.querySelectorAll('.swatch').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.palette===state.palette?'true':'false'));
   ['density','spiral','warp','glow','zoom','speed'].forEach(k=>{const val=state[k];$(k).value=val;$(k+'Out').textContent=k==='density'?val+'%':k==='zoom'?(val/100).toFixed(2)+'×':(val/100).toFixed(2)+(k==='speed'?'×':'');});
   $('pointer').checked=state.pointer;
+   $('warpExtras').hidden=state.mode!==4;
+   $('acidPattern').value=state.acidPattern;
+   $('acidBands').value=state.acidBands;
+   $('acidBandsOut').textContent=state.acidBands;
+   $('acidCycle').checked=state.acidCycle;
+   $('acidAuto').checked=state.acidAuto;
   $('pause').textContent=state.paused?'▶ Resume':'Ⅱ Pause';
   $('seedDisplay').textContent='SEED '+state.seed;
   const m=meta[state.mode];$('stageTitle').textContent=m.title;$('stageSub').textContent=m.sub;
@@ -419,31 +449,39 @@ void main(){
  }
  function sanitize(obj){
   if(!obj||typeof obj!=='object')throw Error('Invalid recipe object');
-  for(const key of ['mode','palette','density','spiral','warp','glow','zoom','speed','seed']){
+  for(const key of ['mode','palette','density','spiral','warp','glow','zoom','speed','seed','acidPattern','acidBands']){
    if(obj[key]!==undefined){const num=Number(obj[key]);if(!Number.isFinite(num))throw Error('Invalid '+key);state[key]=num;}
   }
-  const ranges={mode:[0,3],palette:[0,4],density:[15,100],spiral:[20,300],warp:[0,200],glow:[25,250],zoom:[50,220],speed:[0,200],seed:[0,999999]};
+  const ranges={mode:[0,4],palette:[0,5],density:[15,100],spiral:[20,300],warp:[0,200],glow:[25,250],zoom:[50,220],speed:[0,200],seed:[0,999999],acidPattern:[0,5],acidBands:[4,48]};
   Object.entries(ranges).forEach(([k,[mn,mx]])=>state[k]=Math.max(mn,Math.min(mx,Math.round(state[k]))));
   if(typeof obj.pointer==='boolean')state.pointer=obj.pointer;
   if(typeof obj.paused==='boolean')state.paused=obj.paused;
+   if(typeof obj.acidCycle==='boolean')state.acidCycle=obj.acidCycle;
+   if(typeof obj.acidAuto==='boolean')state.acidAuto=obj.acidAuto;
+   autoElapsed=0;
   playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.1.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'0.2.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;
   const target= Math.min(2,Math.sqrt(6400000/(oldW*oldH))); // 2× image, 6.4 MP cap
   canvas.width=Math.round(oldW*target);canvas.height=Math.round(oldH*target);if(gl)gl.viewport(0,0,canvas.width,canvas.height);draw();
-  const prefix=['galaxy','foam','resonance','bloom'][state.mode];
+  const prefix=['galaxy','foam','resonance','bloom','chromatic-warp'][state.mode];
   canvas.toBlob(blob=>{if(blob){download(blob,`phimath-${prefix}-seed-${state.seed}.png`);toast('High-resolution PNG saved');}else toast('Image export unavailable');canvas.width=oldW;canvas.height=oldH;if(gl)gl.viewport(0,0,oldW,oldH);draw();},'image/png');
  }
  function persistHash(){try{const data={...recipe()};delete data.elapsedTime;const url=new URL(window.location.href);url.hash=encodeURIComponent(JSON.stringify(data));return url.href;}catch(_){return window.location.href;}}
  function copyText(s){if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(s);const input=document.createElement('textarea');input.value=s;document.body.append(input);input.select();document.execCommand('copy');input.remove();return Promise.resolve();}
  function bind(){
-  document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{state.mode=+b.dataset.mode;updateUI();draw();}));
+  document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{state.mode=+b.dataset.mode;autoElapsed=0;if(state.mode===4&&state.palette===0)state.palette=5;updateUI();draw();}));
   document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{state.palette=+b.dataset.palette;updateUI();draw();}));
   ['density','spiral','warp','glow','zoom','speed'].forEach(k=>$(k).addEventListener('input',e=>{state[k]=+e.target.value;updateUI();draw();}));
   $('pointer').addEventListener('change',e=>{state.pointer=e.target.checked;draw();});
+   $('acidPattern').addEventListener('change',e=>{state.acidPattern=Number(e.target.value);autoElapsed=0;updateUI();draw();});
+   $('acidBands').addEventListener('input',e=>{state.acidBands=Number(e.target.value);updateUI();draw();});
+   $('acidCycle').addEventListener('change',e=>{state.acidCycle=e.target.checked;draw();});
+   $('acidAuto').addEventListener('change',e=>{state.acidAuto=e.target.checked;autoElapsed=0;});
+   $('acidNext').addEventListener('click',()=>{state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();draw();});
   $('shuffle').addEventListener('click',()=>{state.seed=1+Math.floor(Math.random()*999999);playingTime=0;updateUI();draw();toast('A new mathematical universe has been seeded');});
   $('reset').addEventListener('click',()=>{Object.assign(state,defaults);playingTime=0;updateUI();draw();toast('Equation parameters restored');});
   $('pause').addEventListener('click',()=>{state.paused=!state.paused;updateUI();});
@@ -460,7 +498,7 @@ void main(){
    if(e.code==='Space'){e.preventDefault();$('pause').click();}
    else if(e.key.toLowerCase()==='r')$('shuffle').click();
    else if(e.key.toLowerCase()==='s'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();$('export').click();}
-   else if('1234'.includes(e.key)&&e.key.length===1){state.mode=Number(e.key)-1;updateUI();draw();}
+   else if('12345'.includes(e.key)&&e.key.length===1){state.mode=Number(e.key)-1;updateUI();draw();}
   });
   $('record').addEventListener('click',record);
   window.addEventListener('hashchange',()=>{try{if(location.hash.length>4)sanitize(JSON.parse(decodeURIComponent(location.hash.slice(1))))}catch(_){}});
@@ -484,6 +522,10 @@ void main(){
   if(!active)return;
   const delta=Math.min(.1,(now-last)/1000);last=now;
   if(!state.paused)playingTime+=delta*state.speed/100;
+   if(state.mode===4&&state.acidAuto&&!state.paused){
+    autoElapsed+=delta;
+    if(autoElapsed>=20){state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();}
+   }
   if(resizeNeeded)sizing();
   // Animate at a maximum of 30 FPS to be friendly to laptops and software renderers.
   if(now-lastRender>=(gl?32:90)||lastRender===0){draw();lastRender=now;frameN++;}
