@@ -62,7 +62,7 @@
    '<div class="vj-title"><span>♫ VJ LAB</span><span style="font:10px system-ui;color:#d8a77b">v0.3</span></div>',
    '<div class="vj-desc">Play the equations. Input audio or manually sculpt the frequency bands.</div>',
    '<label class="vj-field">Signal input<select id="vjSource"><option value="demo">Demo beat (no permissions)</option><option value="manual">Manual bands</option><option value="mic">Microphone / audio interface</option><option value="file">Local music file</option><option value="tab">Browser tab audio capture</option><option value="external">BackSpin96 / external adapter</option></select></label>',
-   '<div id="vjStatus" class="vj-status" role="status" aria-live="polite">Demo beat ready. No permissions needed.</div>',
+   '<div id="vjStatus" class="vj-status" role="status" aria-live="polite">Demo beat ready. Click Start input; no permissions needed.</div>',
    '<div class="vj-buttons"><button id="vjConnect" type="button">▶ Start input</button><button id="vjStop" type="button">■ Stop input</button></div>',
    '<input id="vjFile" type="file" accept="audio/*" hidden><audio id="vjPlayer" controls></audio>',
    '<div id="vjMeters" aria-label="Frequency levels">',
@@ -88,7 +88,7 @@
       midiLearn=false,midiBindings={},time=0,beatEnergy=0,beatAverage=.1,
       lastBeat=-10,streamToken=0,externalTime=-10,externalFrame=null,
       current={bass:0,mid:0,high:0,beat:0,level:0},raw={bass:0,mid:0,high:0,beat:0,level:0},
-      demoRunning=true,lastMeters=0,disposed=false;
+      demoRunning=false,lastMeters=0,disposed=false;
   const note=(s,error=false)=>{el('vjStatus').textContent=s;el('vjStatus').className='vj-status '+(error?'vj-error':'');};
   function updateDepth(){
    settings.wet=Number(el('vjWet').value)/100;
