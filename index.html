@@ -344,7 +344,7 @@ void main(){
  function drawCPU(deck=state,targetCtx=ctx2d,targetCanvas=canvas){
   if(!targetCtx)return;
   const live=vj.effective(deck);
-   if(live.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
+   if(live.mode===4){window.PhiChromatic.draw(targetCtx,targetCanvas,live,playingTime);return;}
   const c=targetCtx,w=targetCanvas.width,h=targetCanvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[live.palette];
   const r=rng(live.seed+19),dens=live.density/100,warp=live.warp/100,spiral=live.spiral/100,lum=live.glow/100,zoom=live.zoom/100;
   c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
