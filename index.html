@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080910">
-<meta name="description" content="PhiMath Atelier: a standalone GPU-powered mathematical art engine with galaxies, nested foam, interference, and golden-angle blooms.">
+<meta name="description" content="PhiMath Atelier: a standalone GPU-powered mathematical art engine with galaxies, nested foam, interference, golden-angle blooms and color-cycling warps.">
 <title>ΦMath Atelier · A Living Equation Studio</title>
 <style>
   :root{color-scheme:dark;--bg:#080910;--panel:#10121c;--panel2:#161924;--border:#272b39;--muted:#9196a9;--text:#f4f0ec;--gold:#efc184;--gold2:#f8dec0;--r:17px;--font:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
@@ -27,6 +27,7 @@
   .foot{grid-column:1/-1;border-top:1px solid var(--border);background:#0d0e16;display:flex;align-items:center;gap:16px;padding:0 22px;color:#9b9cae;font-size:11px;min-width:0}.foot b{color:#cfac81;font-weight:650}.foot .spacer{flex:1}.foot a{color:#bca185;text-decoration:none}.foot a:hover{text-decoration:underline}.foot .seed{font-variant-numeric:tabular-nums;color:#d4b493}
   .toast{position:fixed;bottom:72px;left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;color:#f5efe6;background:#262331;border:1px solid #887156;box-shadow:0 10px 40px #0008;border-radius:11px;padding:11px 16px;font-size:12px;transition:.2s;z-index:30;text-align:center;max-width:calc(100vw - 28px)}.toast.show{opacity:1;transform:translate(-50%,0)}
   .error{position:absolute;top:30%;max-width:400px;padding:24px;background:#27191d;color:#f1cfbc;border:1px solid #954f54;border-radius:14px;line-height:1.65;text-align:center}
+  .warp-extras[hidden]{display:none}.warp-extras select{width:100%;margin-top:9px;background:#191b2a;color:#f0e7df;border:1px solid #5b5166;border-radius:9px;padding:10px}.warp-extras select:focus-visible{outline:2px solid var(--gold)}
   @media(max-width:1200px){.app{grid-template-columns:242px minmax(0,1fr) 248px}.panel{padding:18px 13px}.top-note{display:none}}
   @media(max-width:850px){.app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:minmax(0,1fr);grid-template-rows:65px minmax(390px,60vh) auto auto 55px}.topbar{grid-column:1;grid-row:1}.stage{grid-column:1;grid-row:2}.left{grid-column:1;grid-row:3;border-right:0;border-top:1px solid var(--border);overflow:visible}.right{grid-column:1;grid-row:4;border-left:0;border-top:1px solid var(--border);overflow:visible}.foot{grid-column:1;grid-row:5}.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:19px 20px}.ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.swatch{width:36px;height:36px}.topbar{padding:0 14px}.topbar .pill{display:none}}
   @media(max-width:540px){.stage{min-height:390px}.overlay-top{left:12px;top:12px;right:12px}.overlay-bottom{left:12px;bottom:12px;right:12px}.arttitle{font-size:16px}.glass{padding:8px 10px}.keyhints{display:none}.foot{padding:0 13px;gap:8px;font-size:10px}.foot .hide-sm{display:none}.ranges{grid-template-columns:1fr}.panel{padding:20px 15px}}
@@ -38,15 +39,16 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.1 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.2 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
-    <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>4 engines</span></div>
+    <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
       <div class="modes" id="modes">
         <button class="mode active" data-mode="0" aria-pressed="true"><span class="ico">✧</span><span><strong>Galaxy Cluster</strong><small>Analytic spiral luminosity</small></span></button>
         <button class="mode" data-mode="1" aria-pressed="false"><span class="ico">◎</span><span><strong>Nested Foam</strong><small>Bubbles, pressure & grids</small></span></button>
         <button class="mode" data-mode="2" aria-pressed="false"><span class="ico">≋</span><span><strong>Resonance Field</strong><small>Wave interference</small></span></button>
         <button class="mode" data-mode="3" aria-pressed="false"><span class="ico">❋</span><span><strong>Golden Bloom</strong><small>Phyllotaxis & harmonics</small></span></button>
+        <button class="mode" data-mode="4" aria-pressed="false"><span class="ico">◉</span><span><strong>Chromatic Warp</strong><small>AcidWarp-inspired color cycling</small></span></button>
       </div>
     </section>
     <section class="section"><div class="section-head"><span class="smallcaps">02 / Light palette</span></div>
@@ -56,6 +58,7 @@
         <button class="swatch" data-palette="2" title="Bioluminescent" aria-label="Bioluminescent" aria-pressed="false" style="background:linear-gradient(135deg,#082e3e,#38a78f 60%,#e6e1ab)"></button>
         <button class="swatch" data-palette="3" title="Solar Flare" aria-label="Solar Flare" aria-pressed="false" style="background:linear-gradient(135deg,#51233c,#d65c58 55%,#f9c469)"></button>
         <button class="swatch" data-palette="4" title="Silver Ghost" aria-label="Silver Ghost" aria-pressed="false" style="background:linear-gradient(135deg,#1d2941,#7b90b7 50%,#f2eee7)"></button>
+        <button class="swatch" data-palette="5" title="VGA Spectrum" aria-label="VGA Spectrum" aria-pressed="false" style="background:conic-gradient(#ff4646,#fbef4f,#29e4a2,#366fff,#f347e0,#ff4646)"></button>
       </div>
     </section>
     <section class="section"><div class="section-head"><span class="smallcaps">03 / Equation controls</span></div>
@@ -70,6 +73,20 @@
       <label class="toggle"><input type="checkbox" id="pointer" checked>Interactive gravity lens (move pointer)</label>
       <div class="rowbtn"><button class="btn flex" id="shuffle" type="button">↝ New universe</button><button class="btn flex" id="reset" type="button">↺ Reset</button></div>
     </section>
+    <section class="section warp-extras" id="warpExtras" hidden>
+      <div class="section-head"><span class="smallcaps">Chromatic Warp lab</span><span>Palette cycling</span></div>
+      <label class="range-label" for="acidPattern">Mathematical scene</label>
+      <select id="acidPattern" aria-label="Chromatic Warp mathematical scene">
+        <option value="0">01 · Liquid Rings</option><option value="1">02 · Solar Spokes</option>
+        <option value="2">03 · Twin Wells</option><option value="3">04 · Woven Grid</option>
+        <option value="4">05 · Liquid Moiré</option><option value="5">06 · Kaleido Flower</option>
+      </select>
+      <div class="range-row" style="margin-top:18px"><div class="range-label"><label for="acidBands">Color bands</label><output id="acidBandsOut">16</output></div><input id="acidBands" type="range" min="4" max="48" step="1" value="16"></div>
+      <label class="toggle"><input id="acidCycle" type="checkbox" checked>Cycle colors through fixed geometry</label>
+      <label class="toggle"><input id="acidAuto" type="checkbox">Auto-change scene every 20 seconds</label>
+      <button type="button" class="btn" id="acidNext" style="width:100%">↝ Next mathematical scene</button>
+      <p class="desc">The pattern is calculated once; its indexed colors flow. Speed is controlled by <strong>Time flow</strong>. Your palette choice also applies.</p>
+    </section>
     <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
       <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
     </section>
@@ -77,7 +94,7 @@
   <main class="stage" id="stage" aria-label="Live mathematical artwork">
     <canvas id="art" aria-label="Procedural mathematical visualization. Controls are in the left panel."></canvas>
     <div class="overlay-top"><div class="glass"><div class="arttitle" id="stageTitle">The Unwritten Cosmos</div><div class="artsub" id="stageSub">Galaxy Cluster / Equation 01</div></div><div class="glass chip"><span class="dot"></span>LIVE GPU RENDER</div></div>
-    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–4 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
+    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–5 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
   </main>
   <aside class="panel right" aria-label="Mathematics and export">
     <section class="section"><div class="smallcaps">Behind the artwork</div><h1 class="big-label" id="mathTitle">A universe without a photograph.</h1><p class="intro" id="mathIntro">Every visible galaxy is synthesized from equations, without a single photograph.</p><div class="smallcaps">Conceptual equation</div><div class="equation" id="equation" aria-label="Artwork equation">L = Σᵢ exp(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln rᵢ + φᵢ)]</div><div class="desc" id="mathDesc">Radial falloff creates halos. Angular phase creates arms. A seed chooses galaxy positions, tilts and sizes.</div></section>
@@ -91,7 +108,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.1.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.2.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -263,6 +280,7 @@ void main(){
  gl_FragColor=vec4(color,1.0);
 }
 </script>
+<script src="chromatic-warp.js"></script>
 <script>
 (()=>{
  'use strict';
