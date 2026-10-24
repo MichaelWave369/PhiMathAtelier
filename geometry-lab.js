@@ -159,6 +159,7 @@ const css=[
  '.geometry-lab .gl-equation{margin:11px 0;background:#101421;border:1px solid #474251;color:#e0d7c9;border-radius:10px;padding:10px;line-height:1.55;font:12px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}',
  '.geometry-lab .gl-warn{margin-top:12px;color:#aeb1c3;font-size:10px;line-height:1.5}',
  '.geometry-lab .gl-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}',
+ '.geometry-lab .gl-meter{color:#ebc786;font:11px ui-monospace,monospace;padding:6px 9px;background:#101420;border-radius:8px}',
  '#geometryCanvas{position:absolute;inset:0;z-index:2;width:100%;height:100%;touch-action:manipulation;cursor:crosshair}',
  '#geometryCanvas[hidden]{display:none}',
  '.stage.geometry-active .overlay-top,.stage.geometry-active .overlay-bottom{display:none}',
@@ -191,11 +192,15 @@ function create({root,canvas,stage}){
  '<label class="gl-row"><span><input id="glVisible" type="checkbox" checked> Layer visible</span></label>',
  '<div class="gl-note">Exact construction of selected layer:</div><div class="gl-equation" id="glEquation" aria-live="polite"></div>',
  '<label class="gl-row">Global rotation: <output id="glMotionOut"></output><input id="glMotion" type="range" min="0" max="120" step="1"></label>',
+ '<label class="gl-row"><span><input id="glAudio" type="checkbox"> React to VJ LAB audio levels</span></label>',
+ '<label class="gl-row">Audio response intensity: <output id="glWetOut">75%</output><input id="glWet" type="range" min="0" max="100" step="5" value="75"></label>',
+ '<p class="gl-note">Bass pulses size; mids bend rotation; highs and beats brighten. Start a signal in VJ LAB below. No separate audio permission.</p>',
+ '<div id="glMeter" class="gl-meter" role="status" aria-live="off">B 0 · M 0 · H 0 · BEAT 0</div>',
  '<label class="gl-row">Background<select id="glBg"><option value="ink">Arcane ink</option><option value="midnight">Nebula midnight</option><option value="parchment">Warm parchment</option></select></label>',
  '<div class="gl-two"><button type="button" id="glPause">Ⅱ Pause motion</button><button type="button" id="glReset">↺ Reset preset</button></div>',
- '<div class="gl-actions"><button type="button" id="glPNG">↓ Geometry PNG</button><button type="button" id="glJSON">↓ Recipe JSON</button><button type="button" id="glImport">↑ Import recipe</button><button type="button" id="glFullscreen">⛶ Fullscreen stage</button></div>',
+ '<div class="gl-actions"><button type="button" id="glPNG">↓ Geometry PNG</button><button type="button" id="glSVG">↓ Vector SVG</button><button type="button" id="glJSON">↓ Recipe JSON</button><button type="button" id="glImport">↑ Import recipe</button><button type="button" id="glFullscreen">⛶ Fullscreen stage</button></div>',
  '<input id="glFile" type="file" accept=".json,application/json" hidden>',
- '<p class="gl-warn">Uses its own Canvas2D stage and exports, separate from the five GPU worlds and dual-deck recorder. Recipes contain geometry only. Original artwork remains untouched.</p>',
+ '<p class="gl-warn">Geometry uses its own Canvas2D stage. Audio changes draw-time transforms, not saved layers. SVG exports a vector frame. Existing GPU worlds and deck captures stay separate.</p>',
  '<p id="glStatus" class="gl-note" role="status" aria-live="polite">Click a layer or one of its visible strokes to inspect the construction.</p>',
  '</div>'
  ].join('');
@@ -203,7 +208,7 @@ function create({root,canvas,stage}){
  label.className='gl-stage-label';label.hidden=true;
  label.innerHTML='◇ Sacred Geometry Laboratory<span>Click a line to select its mathematical layer · 100% locally generated</span>';
  stage.append(label);
- let state=initial(),active=false,clock=0,last=0,raf=0,buffer=new Map();
+ let state=initial(),active=false,clock=0,last=0,raf=0,lastMeter=0,buffer=new Map();
  const context=canvas.getContext('2d');
  if(!context){$('glGo').disabled=true;$('glGo').textContent='Canvas2D unavailable';return null;}
  const save=()=>{try{localStorage.setItem('phimath-geometry-v1',JSON.stringify(state));}catch(_){}};
@@ -284,6 +289,7 @@ function create({root,canvas,stage}){
   $('glColor').value=l.color;$('glVisible').checked=l.visible;
   $('glMotion').value=state.motion;$('glMotionOut').textContent=state.motion+'°/s';
   $('glBg').value=state.background;$('glPause').textContent=state.paused?'▶ Resume motion':'Ⅱ Pause motion';
+  $('glAudio').checked=state.audio.enabled;$('glWet').value=Math.round(state.audio.wet*100);$('glWetOut').textContent=Math.round(state.audio.wet*100)+'%';
   $('glEquation').textContent=equation(l);
   $('glStep').disabled=l.type!=='star';$('glDepth').disabled=l.type!=='flower';$('glTurns').disabled=l.type!=='spiral';
   $('glN').disabled=l.type==='flower'||l.type==='metatron';
@@ -305,6 +311,8 @@ function create({root,canvas,stage}){
  $('glRemove').addEventListener('click',()=>{if(state.layers.length<=1)return;state.layers.splice(state.selected,1);state.selected=Math.min(state.selected,state.layers.length-1);sync();save();});
  $('glMotion').addEventListener('input',e=>{state.motion=Number(e.target.value);sync();save();});
  $('glBg').addEventListener('change',e=>{state.background=e.target.value;sync();save();});
+ $('glAudio').addEventListener('change',e=>{state.audio.enabled=e.target.checked;sync();save();status(state.audio.enabled?'VJ LAB response enabled. Start a signal in VJ LAB.':'Audio response bypassed.');});
+ $('glWet').addEventListener('input',e=>{state.audio.wet=Number(e.target.value)/100;sync();save();});
  $('glPause').addEventListener('click',()=>{state.paused=!state.paused;sync();save();});
  $('glReset').addEventListener('click',()=>{state.layers=preset($('glPreset').value);state.selected=0;clock=0;buffer.clear();sync();save();});
  canvas.addEventListener('pointerdown',event=>{
