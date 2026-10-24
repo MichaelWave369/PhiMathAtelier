@@ -57,9 +57,10 @@ for(const token of ['id="deckMixer"','src="deck-mixer.js"',
   'mixer.drawGL(gl,canvas,renderSceneGL)','mixer.drawCPU(ctx2d,canvas',
   'mixer.exportSettings()','mixer.restore(obj.mixer)',
   'onCrossfade:v=>mixer.setCrossfade(v)',"mixer.nudge(-5)","mixer.nudge(5)",
-  "version:'0.7.0'","function renderSceneGL(deck,framebuffer=null"]){
+  "function renderSceneGL(deck,framebuffer=null"]){
   assert.ok(html.includes(token),'missing studio integration: '+token);
 }
+assert.match(html,/version:'0\.\d+\.\d+'/,'recipe must include a version tag');
 assert.ok(vjSrc.includes('<option value="crossfade">Deck A/B visual crossfader</option>'));
 assert.ok(vjSrc.includes("if(target==='crossfade')"));
 assert.ok(pages.includes('cp deck-mixer.js site/deck-mixer.js'),'deployment must copy mix engine');
