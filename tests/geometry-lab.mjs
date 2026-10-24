@@ -64,4 +64,52 @@ assert.equal(safe.background,'ink');
 assert.deepEqual(JSON.parse(JSON.stringify(lab.geometry({type:'flower',depth:1}))),
  JSON.parse(JSON.stringify(lab.geometry({type:'flower',depth:1}))), 'static geometry deterministic');
 assert.ok(!/\beval\s*\(|\bnew\s+Function\s*\(/.test(source),'never run an arbitrary user formula');
-console.log('PASS: Sacred Geometry Laboratory layer constructions, φ spiral, formula inspector, bounded recipes and deterministic geometry.');
+
+
+// v0.6: the VJ levels do not mutate recipe geometry, and audio is off by default.
+const legacy=lab.sanitizeRecipe({layers:lab.preset('stars'),motion:12,background:'ink'});
+assert.equal(legacy.audio.enabled,false,'older geometry recipes stay visually unchanged');
+assert.equal(legacy.audio.wet,.75);
+const quiet=lab.audioEffect(legacy,{bass:1,mid:1,high:1,beat:1});
+assert.equal(quiet.scale,1);
+assert.equal(quiet.turn,0);
+assert.equal(quiet.glow,1);
+const hot={...legacy,audio:{enabled:true,wet:1}};
+const baseline=lab.audioEffect(hot,{bass:0,mid:0,high:0,beat:0});
+assert.equal(baseline.scale,1);
+assert.equal(baseline.turn,0);
+assert.equal(baseline.glow,1);
+const loud=lab.audioEffect(hot,{bass:1,mid:.8,high:.9,beat:1});
+assert.ok(loud.scale>1.2&&loud.scale<1.4,'bass and beats expand the construction');
+assert.ok(loud.turn>0&&loud.glow>1,'mids rotate and highs brighten');
+assert.equal(lab.audioEffect(hot,{bass:Infinity,high:NaN,beat:-9}).scale,1,'nonfinite audio is safely bypassed');
+const beforeLayer=JSON.stringify(hot.layers);
+lab.layerPose(hot.layers[0],0,hot,2,{bass:.8,mid:.6,high:.5});
+assert.equal(JSON.stringify(hot.layers),beforeLayer,'beat animation must not write into layer settings');
+const custom=lab.sanitizeRecipe({layers:lab.preset('flower'),audio:{enabled:true,wet:999}});
+assert.equal(custom.audio.wet,1,'intensity bounded');
+assert.equal(custom.audio.enabled,true);
+
+// SVG must be a self-contained static snapshot with exact mathematical path count.
+const svg=lab.svgSnapshot({layers:lab.preset('metatron'),selected:0,motion:0},0,900,900);
+assert.match(svg,/^<\?xml version="1\.0"/);
+assert.match(svg,/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+assert.equal((svg.match(/<path d=/g)||[]).length,94,'78 chords, 13 circles, 3 concentric rings');
+assert.ok(svg.includes('<title>PhiMath Atelier Geometry</title>'));
+assert.ok(svg.includes('viewBox="0 0 900 900"'));
+assert.ok(!svg.includes('<script')&&!svg.includes('onload=')&&!svg.includes('http://www.w3.org/2000/svg" xmlns:xlink'),'no executable SVG content');
+assert.notEqual(
+ lab.svgSnapshot(hot,0,800,600,{bass:0,mid:0,high:0,beat:0}),
+ lab.svgSnapshot(hot,0,800,600,{bass:1,mid:1,high:1,beat:1}),
+ 'SVG snapshots reflect current audio animation without editing the recipe'
+);
+const evilSvg=lab.svgSnapshot({layers:[{type:'star',n:7,color:'" onload="alert(1)',opacity:Infinity}],background:'<script>'},0,-99,100000);
+assert.ok(!evilSvg.includes('onload=')&&!evilSvg.includes('<script>'));
+assert.ok(evilSvg.includes('viewBox="0 0 128 4096"'),'export dimensions bounded');
+assert.equal(lab.svgSnapshot(hot,12,700,700),lab.svgSnapshot(hot,12,700,700),'same recipe, frame and levels produce identical SVG');
+const hiddenSvg=lab.svgSnapshot({layers:[{type:'star',visible:false}]});
+assert.ok(!hiddenSvg.includes('<path d='),'hidden layers never export strokes');
+assert.ok(source.includes('id="glSVG"'),'SVG button exists');
+assert.ok(source.includes('id="glAudio"')&&source.includes('id="glWet"'),'VJ controls mounted');
+
+console.log('PASS: geometry constructors, φ, bounded safe SVG export, and non-destructive VJ modulation.');
