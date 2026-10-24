@@ -55,7 +55,7 @@ for(const token of [
  'No audio is uploaded'
 ])assert.ok(source.includes(token),'Missing feature / safety check: '+token);
 for(const token of ['id="vjLab"','src="vj-lab.js"','vj.update(delta)',
- 'const live=vj.effective(state)',"version:'0.3.0'"]){
+ 'const live=vj.effective(deck)',"version:'0.4.0'"]){
  assert.ok(html.includes(token),'missing integration: '+token);
 }
 assert.ok(!html.includes('state.warp+=')&&!html.includes('state.glow+='),'do not mutate canonical art values');
