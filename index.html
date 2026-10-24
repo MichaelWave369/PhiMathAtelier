@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080910">
+<meta name="description" content="PhiMath Atelier: a standalone GPU-powered mathematical art engine with galaxies, nested foam, interference, and golden-angle blooms.">
+<title>ΦMath Atelier · A Living Equation Studio</title>
+<style>
+  :root{color-scheme:dark;--bg:#080910;--panel:#10121c;--panel2:#161924;--border:#272b39;--muted:#9196a9;--text:#f4f0ec;--gold:#efc184;--gold2:#f8dec0;--r:17px;--font:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font)} button,input,select{font:inherit} button{cursor:pointer}
+  .app{display:grid;grid-template-columns:280px minmax(0,1fr) 286px;grid-template-rows:68px minmax(0,1fr) 56px;min-height:100vh;height:100dvh;overflow:hidden}
+  .topbar{grid-column:1/-1;background:#0d0e16;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:0 23px;min-width:0}
+  .brand-icon{width:39px;height:39px;display:grid;place-items:center;border:1px solid #71604d;border-radius:12px;background:radial-gradient(circle at 40% 35%,#3e3243,#141520 76%);color:var(--gold);font-size:26px;font-family:Georgia,serif;flex-shrink:0}
+  .brand{min-width:0}.brand b{display:block;font-family:Georgia,serif;font-size:21px;letter-spacing:-.6px;line-height:1.2;font-weight:500}.brand small{font-size:10px;letter-spacing:1.65px;color:#ae9d88;font-weight:700}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:10px}.pill{border:1px solid #46402f;color:#ebc790;border-radius:40px;padding:6px 11px;font-size:10px;font-weight:750;letter-spacing:1.2px;white-space:nowrap}.top-note{color:#9697aa;font-size:12px;white-space:nowrap}
+  .panel{min-width:0;background:#0d0f18;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#353946 transparent;padding:22px 18px 28px}.left{border-right:1px solid var(--border)}.right{border-left:1px solid var(--border)}
+  .smallcaps{letter-spacing:1.6px;font-size:10px;font-weight:800;color:#928b85;text-transform:uppercase}.section{margin-bottom:26px}.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.section-head span:last-child{font-size:10px;color:#696f80}
+  .modes{display:grid;gap:8px}.mode{display:flex;align-items:center;width:100%;text-align:left;gap:11px;background:#141620;border:1px solid #2c2e3a;color:#d7d8e3;border-radius:12px;padding:10px;transition:.2s}.mode:hover{border-color:#716452;transform:translateY(-1px)}.mode.active{border-color:#c49d6c;background:linear-gradient(95deg,#2d2524,#191a25 85%);box-shadow:inset 0 0 0 1px #a1774730}.mode .ico{height:35px;width:35px;flex-shrink:0;display:grid;place-items:center;border:1px solid #4b4050;background:#1c1a2c;border-radius:9px;font-family:Georgia,serif;font-size:21px;color:#edbf96}.mode strong{display:block;font-size:12px;font-weight:700}.mode small{display:block;color:#9899ad;font-size:10px;margin-top:3px}
+  .palette-row{display:flex;gap:9px;flex-wrap:wrap}.swatch{width:34px;height:34px;border:2px solid #222432;border-radius:50%;position:relative;transition:.15s}.swatch:hover{transform:scale(1.08)}.swatch[aria-pressed="true"]{outline:2px solid #e1bd89;outline-offset:3px}
+  .range-row{margin:0 0 17px}.range-label{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#cbccd7;margin-bottom:9px}.range-label output{color:#e9bb83;font-size:11px;font-variant-numeric:tabular-nums}.range-row input[type=range]{width:100%;cursor:pointer;height:5px;appearance:none;-webkit-appearance:none;border-radius:40px;background:linear-gradient(90deg,#b8916f 0%,#6c5878 100%);outline:none}.range-row input[type=range]::-webkit-slider-thumb{appearance:none;width:15px;height:15px;border-radius:100%;background:#e9bf91;border:3px solid #251f29;box-shadow:0 0 0 1px #be9a70}.range-row input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#e9bf91;border:3px solid #251f29}
+  .rowbtn{display:flex;gap:8px}.btn{background:#1b1e29;border:1px solid #343847;border-radius:10px;color:#e7e5e3;font-size:11px;font-weight:700;padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:6px;transition:.17s;min-height:38px}.btn:hover{background:#282c39;border-color:#77717c}.btn:focus-visible,.mode:focus-visible,.swatch:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.btn.gold{background:#e6bd86;color:#211a19;border-color:#e6bd86}.btn.gold:hover{background:#f2d2a6}.btn.flex{flex:1}
+  .toggle{display:flex;gap:10px;align-items:center;color:#c6c6d0;font-size:12px;margin:0 0 15px;cursor:pointer}.toggle input{accent-color:#d2a676;width:16px;height:16px}
+  .stage{min-width:0;min-height:0;position:relative;overflow:hidden;background:#040408;display:flex;align-items:stretch;justify-content:center}.stage canvas{height:100%;width:100%;display:block;touch-action:none}.overlay-top{position:absolute;top:20px;left:24px;right:24px;display:flex;gap:10px;align-items:flex-start;pointer-events:none;justify-content:space-between}.overlay-bottom{position:absolute;bottom:21px;left:24px;right:24px;display:flex;justify-content:space-between;gap:10px;align-items:flex-end;pointer-events:none}.glass{background:#0a0b13bd;backdrop-filter:blur(16px);border:1px solid #ffffff23;border-radius:12px;padding:11px 13px}.arttitle{font-size:18px;font-family:Georgia,serif;letter-spacing:.1px}.artsub{margin-top:5px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:#c8bbb2}.chip{display:inline-flex;gap:7px;align-items:center;font-size:10px;letter-spacing:.7px;color:#c0c2cb}.dot{width:7px;height:7px;border-radius:100%;background:#a8d6b1;box-shadow:0 0 9px #79c5a3}.keyhints{font-size:10px;color:#b6b7c7}.stats{font-size:11px;font-variant-numeric:tabular-nums;line-height:1.6;text-align:right;color:#c5c5d1}
+  .big-label{font-family:Georgia,serif;font-weight:400;font-size:21px;margin:0 0 8px}.intro{font-size:12px;color:#a2a5b3;line-height:1.55;margin:0 0 19px}.equation{font-family:Georgia,serif;font-size:15px;line-height:1.75;background:linear-gradient(140deg,#201b29,#111827);border:1px solid #403746;border-radius:13px;padding:16px 12px;overflow-wrap:anywhere;color:#f1d7c2;margin:11px 0 12px}.desc{font-size:12px;color:#a7aab8;line-height:1.65}.desc strong{color:#f1dec8}.callout{border-left:2px solid #b98d66;padding:3px 0 3px 11px;margin:19px 0;font-size:12px;line-height:1.6;color:#c0b9b8}
+  .statcard{background:#151823;border:1px solid #2c2f3b;border-radius:12px;padding:14px;margin:11px 0}.statcard .top{display:flex;justify-content:space-between;gap:8px}.statcard .top strong{font-size:12px}.statcard .top span{color:#c6a782;font-size:10px}.statcard p{font-size:11px;color:#a4a9b9;line-height:1.6;margin:7px 0 0}
+  .foot{grid-column:1/-1;border-top:1px solid var(--border);background:#0d0e16;display:flex;align-items:center;gap:16px;padding:0 22px;color:#9b9cae;font-size:11px;min-width:0}.foot b{color:#cfac81;font-weight:650}.foot .spacer{flex:1}.foot a{color:#bca185;text-decoration:none}.foot a:hover{text-decoration:underline}.foot .seed{font-variant-numeric:tabular-nums;color:#d4b493}
+  .toast{position:fixed;bottom:72px;left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;color:#f5efe6;background:#262331;border:1px solid #887156;box-shadow:0 10px 40px #0008;border-radius:11px;padding:11px 16px;font-size:12px;transition:.2s;z-index:30;text-align:center;max-width:calc(100vw - 28px)}.toast.show{opacity:1;transform:translate(-50%,0)}
+  .error{position:absolute;top:30%;max-width:400px;padding:24px;background:#27191d;color:#f1cfbc;border:1px solid #954f54;border-radius:14px;line-height:1.65;text-align:center}
+  @media(max-width:1200px){.app{grid-template-columns:242px minmax(0,1fr) 248px}.panel{padding:18px 13px}.top-note{display:none}}
+  @media(max-width:850px){.app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:minmax(0,1fr);grid-template-rows:65px minmax(390px,60vh) auto auto 55px}.topbar{grid-column:1;grid-row:1}.stage{grid-column:1;grid-row:2}.left{grid-column:1;grid-row:3;border-right:0;border-top:1px solid var(--border);overflow:visible}.right{grid-column:1;grid-row:4;border-left:0;border-top:1px solid var(--border);overflow:visible}.foot{grid-column:1;grid-row:5}.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:19px 20px}.ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.swatch{width:36px;height:36px}.topbar{padding:0 14px}.topbar .pill{display:none}}
+  @media(max-width:540px){.stage{min-height:390px}.overlay-top{left:12px;top:12px;right:12px}.overlay-bottom{left:12px;bottom:12px;right:12px}.arttitle{font-size:16px}.glass{padding:8px 10px}.keyhints{display:none}.foot{padding:0 13px;gap:8px;font-size:10px}.foot .hide-sm{display:none}.ranges{grid-template-columns:1fr}.panel{padding:20px 15px}}
+  @media(prefers-reduced-motion:reduce){.mode,.swatch,.btn,.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand-icon" aria-hidden="true">Φ</div>
+    <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.1 · OFFLINE</span></div>
+  </header>
+  <aside class="panel left" aria-label="Art controls">
+    <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>4 engines</span></div>
+      <div class="modes" id="modes">
+        <button class="mode active" data-mode="0" aria-pressed="true"><span class="ico">✧</span><span><strong>Galaxy Cluster</strong><small>Analytic spiral luminosity</small></span></button>
+        <button class="mode" data-mode="1" aria-pressed="false"><span class="ico">◎</span><span><strong>Nested Foam</strong><small>Bubbles, pressure & grids</small></span></button>
+        <button class="mode" data-mode="2" aria-pressed="false"><span class="ico">≋</span><span><strong>Resonance Field</strong><small>Wave interference</small></span></button>
+        <button class="mode" data-mode="3" aria-pressed="false"><span class="ico">❋</span><span><strong>Golden Bloom</strong><small>Phyllotaxis & harmonics</small></span></button>
+      </div>
+    </section>
+    <section class="section"><div class="section-head"><span class="smallcaps">02 / Light palette</span></div>
+      <div class="palette-row" id="palettes" role="group" aria-label="Color palette">
+        <button class="swatch" data-palette="0" title="Astral Rose" aria-label="Astral Rose" aria-pressed="true" style="background:linear-gradient(135deg,#402c7d,#db81ac 60%,#fbdca1)"></button>
+        <button class="swatch" data-palette="1" title="Ion Blue" aria-label="Ion Blue" aria-pressed="false" style="background:linear-gradient(135deg,#142d77,#1995ad 60%,#b5edfb)"></button>
+        <button class="swatch" data-palette="2" title="Bioluminescent" aria-label="Bioluminescent" aria-pressed="false" style="background:linear-gradient(135deg,#082e3e,#38a78f 60%,#e6e1ab)"></button>
+        <button class="swatch" data-palette="3" title="Solar Flare" aria-label="Solar Flare" aria-pressed="false" style="background:linear-gradient(135deg,#51233c,#d65c58 55%,#f9c469)"></button>
+        <button class="swatch" data-palette="4" title="Silver Ghost" aria-label="Silver Ghost" aria-pressed="false" style="background:linear-gradient(135deg,#1d2941,#7b90b7 50%,#f2eee7)"></button>
+      </div>
+    </section>
+    <section class="section"><div class="section-head"><span class="smallcaps">03 / Equation controls</span></div>
+      <div class="ranges" id="ranges">
+        <div class="range-row"><div class="range-label"><label for="density">Structure density</label><output id="densityOut">72%</output></div><input id="density" type="range" min="15" max="100" step="1" value="72"></div>
+        <div class="range-row"><div class="range-label"><label for="spiral">Spiral frequency</label><output id="spiralOut">1.40</output></div><input id="spiral" type="range" min="20" max="300" step="5" value="140"></div>
+        <div class="range-row"><div class="range-label"><label for="warp">Field deformation</label><output id="warpOut">0.65</output></div><input id="warp" type="range" min="0" max="200" step="5" value="65"></div>
+        <div class="range-row"><div class="range-label"><label for="glow">Luminosity</label><output id="glowOut">1.20</output></div><input id="glow" type="range" min="25" max="250" step="5" value="120"></div>
+        <div class="range-row"><div class="range-label"><label for="zoom">Scale</label><output id="zoomOut">1.00×</output></div><input id="zoom" type="range" min="50" max="220" step="5" value="100"></div>
+        <div class="range-row"><div class="range-label"><label for="speed">Time flow</label><output id="speedOut">0.35×</output></div><input id="speed" type="range" min="0" max="200" step="5" value="35"></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="pointer" checked>Interactive gravity lens (move pointer)</label>
+      <div class="rowbtn"><button class="btn flex" id="shuffle" type="button">↝ New universe</button><button class="btn flex" id="reset" type="button">↺ Reset</button></div>
+    </section>
+    <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
+      <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
+    </section>
+  </aside>
+  <main class="stage" id="stage" aria-label="Live mathematical artwork">
+    <canvas id="art" aria-label="Procedural mathematical visualization. Controls are in the left panel."></canvas>
+    <div class="overlay-top"><div class="glass"><div class="arttitle" id="stageTitle">The Unwritten Cosmos</div><div class="artsub" id="stageSub">Galaxy Cluster / Equation 01</div></div><div class="glass chip"><span class="dot"></span>LIVE GPU RENDER</div></div>
+    <div class="overlay-bottom"><div class="glass keyhints">SPACE pause · R randomize · 1–4 switch worlds · S save PNG</div><div class="glass stats" id="stats">Calculating light…</div></div>
+  </main>
+  <aside class="panel right" aria-label="Mathematics and export">
+    <section class="section"><div class="smallcaps">Behind the artwork</div><h1 class="big-label" id="mathTitle">A universe without a photograph.</h1><p class="intro" id="mathIntro">Every visible galaxy is synthesized from equations, without a single photograph.</p><div class="smallcaps">Conceptual equation</div><div class="equation" id="equation" aria-label="Artwork equation">L = Σᵢ exp(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln rᵢ + φᵢ)]</div><div class="desc" id="mathDesc">Radial falloff creates halos. Angular phase creates arms. A seed chooses galaxy positions, tilts and sizes.</div></section>
+    <section class="section"><div class="section-head"><span class="smallcaps">Export & share</span></div>
+      <div style="display:grid;gap:8px"><button class="btn gold" id="export" type="button">↓ Save artwork · PNG</button><button class="btn" id="saveRecipe" type="button">↓ Export equation recipe · JSON</button><button class="btn" id="loadRecipe" type="button">↑ Import saved recipe</button><button class="btn" id="copyLink" type="button">⧉ Copy state link</button></div>
+      <input id="recipeFile" type="file" accept="application/json,.json" hidden>
+      <div class="callout"><strong>Reproducible by design.</strong> Save the seed and parameters, and you can rebuild the same static composition on another device.</div>
+    </section>
+    <section class="section"><div class="smallcaps">Lab notebook</div>
+      <div class="statcard"><div class="top"><strong>Engine</strong><span>GLSL · WebGL</span></div><p>WebGL uses a mathematical fragment shader per pixel; Canvas2D provides a graceful fallback. No photos, remote assets, or AI image generation.</p></div>
+      <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
+    </section>
+  </aside>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.1.0</span></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script id="vertexShader" type="x-shader/x-vertex">
+attribute vec2 a_position;
+void main(){gl_Position=vec4(a_position,0.0,1.0);}
+</script>
+<script id="fragmentShader" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+uniform float u_seed;
+uniform float u_density;
+uniform float u_spiral;
+uniform float u_warp;
+uniform float u_glow;
+uniform float u_zoom;
+uniform float u_pointer;
+uniform int u_mode;
+uniform int u_palette;
+#define PI 3.14159265359
+float hash1(float n){return fract(sin(n*127.1+u_seed*0.031)*43758.5453123);}
+float hash2(vec2 n){return fract(sin(dot(n,vec2(127.1,311.7))+u_seed*0.19)*43758.5453123);}
+vec2 spin(vec2 p,float a){float c=cos(a),s=sin(a);return vec2(c*p.x-s*p.y,s*p.x+c*p.y);}
+vec3 palette(float t){
+ t=clamp(t,0.0,1.0);
+ vec3 a,b,c;
+ if(u_palette==0){a=vec3(.20,.13,.48);b=vec3(.83,.39,.65);c=vec3(1.0,.89,.67);}
+ else if(u_palette==1){a=vec3(.08,.15,.51);b=vec3(.10,.63,.79);c=vec3(.78,.97,1.0);}
+ else if(u_palette==2){a=vec3(.04,.22,.29);b=vec3(.17,.64,.52);c=vec3(.94,.94,.65);}
+ else if(u_palette==3){a=vec3(.33,.09,.20);b=vec3(.92,.28,.24);c=vec3(1.0,.83,.36);}
+ else{a=vec3(.10,.14,.24);b=vec3(.42,.51,.66);c=vec3(.99,.98,.95);}
+ return mix(mix(a,b,smoothstep(0.0,.58,t)),c,smoothstep(.50,1.0,t));
+}
+float stars(vec2 p){
+ vec2 g=p*vec2(195.0,195.0);vec2 cell=floor(g);vec2 f=fract(g)-.5;
+ float h=hash2(cell);
+ float star=step(.987,h)*exp(-length(f)*22.0)*(.4+1.3*hash2(cell+8.0));
+ return star;
+}
+vec3 galaxy(vec2 p){
+ vec3 sum=vec3(0.0);
+ float aspect=u_resolution.x/u_resolution.y;
+ for(int i=0;i<45;i++){
+  float fi=float(i);
+  if(fi>5.0+u_density*38.0)continue;
+  vec2 h=vec2(hash1(fi*6.17+4.1),hash1(fi*7.17+6.2));
+  vec2 center=vec2((h.x*2.0-1.0)*aspect*.72,(h.y*2.0-1.0)*.79);
+  float size=mix(.030,.120,pow(hash1(fi*2.7+9.1),2.4));
+  if(i==0){center=vec2(-aspect*.26,-.21);size=.195;}
+  if(i==1){center=vec2(aspect*.20,.24);size=.135;}
+  vec2 q=spin((p-center)/size,hash1(fi*3.3+4.8)*6.283);
+  q.y*=mix(1.0,2.5,hash1(fi*8.6+1.8));
+  float r=length(q)+.00001;
+  if(r>6.5)continue;
+  float th=atan(q.y,q.x);
+  float arms=2.0+floor(hash1(fi+11.7)*2.8);
+  float phase=th*arms-(3.4*u_spiral)*log(r+.12)+hash1(fi+18.2)*6.28+u_time*.14;
+  float ridge=pow(.5+.5*cos(phase),10.0);
+  float halo=exp(-r*2.7);
+  float disc=exp(-r*2.0)*(.11+1.45*ridge);
+  float core=exp(-r*r*13.0)*1.6;
+  float rim=exp(-pow(r-1.35,2.0)*3.0)*ridge*.22;
+  float flicker=.84+.16*sin(th*19.0+fi*3.1+r*31.0);
+  float v=(halo*.075+disc+core+rim)*flicker;
+  vec3 col=palette(.30+.37*hash1(fi*8.13)+.20*clamp(1.0-r,0.0,1.0));
+  sum+=col*v;
+ }
+ float star=stars(p);
+ sum+=vec3(.72,.77,1.0)*star*(1.2+u_glow*.4);
+ float neb=sin(p.x*6.5+sin(p.y*3.0+u_seed)) * sin(p.y*9.0-p.x*2.0);
+ sum+=palette(.25)*max(0.0,neb)*.016;
+ return sum;
+}
+vec3 foam(vec2 p){
+ vec3 col=vec3(0.0);
+ float aspect=u_resolution.x/u_resolution.y;
+ float inside=0.0;
+ for(int i=0;i<46;i++){
+  float fi=float(i);
+  if(fi>8.0+u_density*35.0)continue;
+  vec2 c=vec2((hash1(fi*8.13+2.0)*2.0-1.0)*aspect*.72,(hash1(fi*6.12+8.0)*2.0-1.0)*.72);
+  if(i==0)c=vec2(-aspect*.20,-.05);
+  if(i==1)c=vec2(aspect*.21,.08);
+  float rad=mix(.028,.18,hash1(fi*5.24+6.0));if(i<2)rad=.27;
+  vec2 rel=p-c;
+  float a=atan(rel.y,rel.x);
+  float distort=.010*u_warp*sin(a*(3.0+floor(hash1(fi+2.2)*5.0))+u_time*.27+fi);
+  float d=length(rel)-rad-distort;
+  float rim=exp(-pow(d/(.0029+.0019*u_glow),2.0));
+  float outer=exp(-pow(d/(.018+.012*u_warp),2.0));
+  float micro=exp(-pow((length(rel)-rad*.58)/(.003+.002*u_glow),2.0));
+  float interior=(1.0-smoothstep(-.014,.012,d));
+  inside=max(inside,interior*.52);
+  vec3 tint=palette(.15+.73*hash1(fi*7.27+2.0));
+  col+=tint*(rim*1.2+outer*.15+micro*.19*interior);
+ }
+ vec2 w=p+vec2(sin(p.y*11.0+u_time*.16),sin(p.x*13.0-u_time*.16))*.025*u_warp;
+ vec2 grid=abs(fract(w*24.0)-.5);
+ float line=(1.0-smoothstep(.47,.495,max(grid.x,grid.y)))*.16;
+ float node=exp(-length(fract(w*24.0)-.5)*16.0)*.30;
+ col+=palette(.28)*(line+node)*inside;
+ col+=palette(.07)*stars(p)*.32;
+ return col;
+}
+vec3 resonance(vec2 p){
+ vec2 sum=vec2(0.0);
+ float envelope=0.0;
+ float aspect=u_resolution.x/u_resolution.y;
+ for(int i=0;i<13;i++){
+  float fi=float(i);
+  if(fi>2.0+u_density*9.0)continue;
+  vec2 c=vec2((hash1(fi*7.7+8.0)*2.0-1.0)*aspect*.56,(hash1(fi*9.19+9.0)*2.0-1.0)*.63);
+  float d=length(p-c)+.003;
+  float phase=d*(31.0*u_spiral)+fi*2.39996-u_time*(1.0+.25*hash1(fi));
+  float amp=1.0/(.35+d*3.5);
+  sum+=vec2(cos(phase),sin(phase))*amp;
+  envelope+=amp;
+ }
+ float coherent=length(sum)/max(envelope,.0001);
+ float intensity=pow(coherent,2.3);
+ float contours=pow(.5+.5*cos(length(sum)*7.5+u_time*.3),5.0);
+ vec3 a=palette(.18+intensity*.74);
+ vec3 col=a*(intensity*2.65+contours*.22);
+ col+=palette(.70)*stars(p)*.12;
+ return col;
+}
+vec3 bloom(vec2 p){
+ vec3 col=vec3(0.0);
+ float r=length(p)+.00001;
+ float a=atan(p.y,p.x);
+ float petals=pow(.5+.5*cos(a*(5.0+floor(u_spiral*3.0))+r*17.0*u_warp-u_time*.16),10.0);
+ float radial=exp(-r*3.5)*(.12+petals*.85);
+ float rings=pow(.5+.5*cos(r*48.0*u_spiral-u_time),18.0)*exp(-r*2.0)*.48;
+ col+=palette(.35+.4*petals)*(radial+rings);
+ for(int i=0;i<100;i++){
+  float fi=float(i);
+  if(fi>15.0+u_density*80.0)continue;
+  float t=fi/100.0;
+  float an=fi*2.39996322973+u_time*.025;
+  float radius=sqrt(t)*.83;
+  vec2 center=vec2(cos(an),sin(an))*radius;
+  center+=vec2(sin(an*4.0),cos(an*3.0))*.025*u_warp;
+  float d=length(p-center);
+  float sz=mix(.008,.025,1.0-t);
+  float glow=exp(-pow(d/sz,2.0)*1.7);
+  float aura=exp(-d/(sz*4.0))*.045;
+  col+=palette(.15+.73*t)*(glow*1.8+aura);
+ }
+ col+=palette(.78)*exp(-r*r*95.0)*1.7;
+ col+=palette(.28)*stars(p)*.15;
+ return col;
+}
+void main(){
+ vec2 p=(gl_FragCoord.xy-u_resolution*.5)/u_resolution.y;
+ p/=u_zoom;
+ if(u_pointer>.5){vec2 v=p-u_mouse/u_zoom;float d=length(v);p-=v*exp(-d*5.5)*.15*u_warp;}
+ p+=vec2(.010*sin(p.y*3.0+u_time*.17),.010*cos(p.x*4.0-u_time*.13))*u_warp;
+ vec3 light;
+ if(u_mode==0)light=galaxy(p);
+ else if(u_mode==1)light=foam(p);
+ else if(u_mode==2)light=resonance(p);
+ else light=bloom(p);
+ light*=u_glow;
+ vec3 color=1.0-exp(-light*1.13);
+ color=pow(color,vec3(.79));
+ color+=palette(.02)*.006;
+ color=clamp(color,0.0,1.0);
+ gl_FragColor=vec4(color,1.0);
+}
+</script>
+<script>
+(()=>{
+ 'use strict';
+ const $=(id)=>document.getElementById(id);
+ const state={mode:0,palette:0,density:72,spiral:140,warp:65,glow:120,zoom:100,speed:35,seed:369,pointer:true,paused:false};
+ const defaults={...state};
+ const meta=[
+  {title:'The Unwritten Cosmos',sub:'Galaxy Cluster / Equation 01',mathTitle:'A universe without a photograph.',intro:'Every visible galaxy is synthesized from equations, without a single photograph.',eq:'L(x,y) = Σᵢ e^(−αrᵢ) · [c + cosᵖ(kθᵢ − β ln(rᵢ + ε) + φᵢ)]',desc:'<strong>Exponential decay</strong> makes each halo fade. A tightly peaked <strong>angular cosine</strong> creates spiral arms. Each seeded center has its own tilt, scale, and phase.'},
+  {title:'The Nested Continuum',sub:'Nested Foam / Equation 02',mathTitle:'Boundaries within boundaries.',intro:'Dozens of independently curved bubble membranes emerge from distance fields and harmonic pressure.',eq:'dᵢ = ‖p − cᵢ‖ − Rᵢ − A sin(kθᵢ + ωt)\nMᵢ = exp[−(dᵢ / σ)²]',desc:'<strong>Signed-distance membranes</strong> form luminous rings. Harmonic distortion bends their surfaces, while a transformed <strong>Cartesian grid</strong> shines through the interiors.'},
+  {title:'A Field of Echoes',sub:'Resonance Field / Equation 03',mathTitle:'Where waves meet, patterns appear.',intro:'Independent phase emitters produce interference fringes, bright ridges and dark cancellations.',eq:'Ψ(p,t) = Σᵢ Aᵢ · exp[j(k‖p − cᵢ‖ − ωᵢt + φᵢ)]\nI = |Ψ|²',desc:'Each source contributes a <strong>complex wave</strong>. The GPU shader computes real and imaginary wave components and converts their combined magnitude into color. This is an illustrative interference field, not a quantum-memory device.'},
+  {title:'The Golden Garden',sub:'Golden Bloom / Equation 04',mathTitle:'A flower assembled from numbers.',intro:'One irrational angle repeatedly applied, and a strangely botanical structure starts to emerge.',eq:'θₙ = n · π(3 − √5)\nrₙ = c√n\npₙ = rₙ(cos θₙ, sin θₙ)',desc:'A <strong>golden angle</strong> distributes points across a disk, inspired by phyllotaxis. Layered harmonics and radial falloff turn the arrangement into a luminous mathematical bloom.'}
+ ];
+ const canvas=$('art'), stage=$('stage');
+ let gl, ctx2d, prog, buffer, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
+ let pointer={x:0,y:0,inside:false};
+ let toastTimer;
+ function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3300);}
+ function compile(type,src){const shader=gl.createShader(type);gl.shaderSource(shader,src);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){throw Error(gl.getShaderInfoLog(shader));}return shader;}
+ function initGL(){
+  gl=canvas.getContext('webgl',{alpha:false,preserveDrawingBuffer:true,antialias:false,depth:false,stencil:false,powerPreference:'high-performance'}) || canvas.getContext('experimental-webgl');
+  if(!gl){ctx2d=canvas.getContext('2d',{alpha:false});if(!ctx2d)throw Error('Neither WebGL nor 2D canvas is supported.');document.querySelector('.chip').innerHTML='<span class="dot"></span>LIVE CANVAS RENDER';return;}
+  prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,$('vertexShader').textContent));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,$('fragmentShader').textContent));gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog); buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const at=gl.getAttribLocation(prog,'a_position');gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,2,gl.FLOAT,false,0,0);
+  ['resolution','mouse','time','seed','density','spiral','warp','glow','zoom','pointer','mode','palette'].forEach(k=>uni[k]=gl.getUniformLocation(prog,'u_'+k));
+  gl.disable(gl.DEPTH_TEST);
+ }
+
+ // Canvas2D fallback. The WebGL shader remains the primary engine; this renderer
+ // gives browsers without GPU acceleration an attractive, fully offline experience.
+ const colorSchemes=[['#9b74ec','#ffaaca','#ffe4ae'],['#568dff','#64e1ff','#e0fbff'],['#4bcdab','#b4e3c8','#fff0af'],['#ee658d','#ff9f62','#ffe49b'],['#93a8cd','#d5dbf1','#ffffff']];
+ function rng(seed){let x=(seed|0)||369;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967295;};}
+ function drawCPU(){
+  if(!ctx2d)return;
+  const c=ctx2d,w=canvas.width,h=canvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[state.palette];
+  const r=rng(state.seed+19),dens=state.density/100,warp=state.warp/100,spiral=state.spiral/100,lum=state.glow/100,zoom=state.zoom/100;
+  c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
+  const bg=c.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,k*.82);bg.addColorStop(0,'#171024');bg.addColorStop(.5,'#090a17');bg.addColorStop(1,'#04050a');c.globalAlpha=.9;c.fillStyle=bg;c.fillRect(0,0,w,h);c.globalAlpha=1;
+  c.globalCompositeOperation='screen';
+  // stable stars are present in all four modes.
+  for(let i=0;i<600;i++){
+   const x=r()*w,y=r()*h,size=r()<.05?1.4:.45+r()*.5;
+   c.globalAlpha=(.1+r()*.7)*Math.min(lum,1.8);c.fillStyle=i%9===0?pal[1]:'#dddaf8';c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
+  }
+  c.globalAlpha=1;
+  if(state.mode===0){
+   const count=Math.round(8+dens*29);
+   for(let i=0;i<count;i++){
+    let x=r()*w,y=r()*h,scale=(.015+Math.pow(r(),3)*.115)*k*zoom,rot=r()*Math.PI*2,tilt=.45+r()*.7,hue=pal[i%3];
+    if(i===0){x=w*.30;y=h*.70;scale=k*.175*zoom;hue=pal[2];tilt=.72;}
+    if(i===1){x=w*.72;y=h*.37;scale=k*.12*zoom;hue=pal[0];tilt=.65;}
+    c.save();c.translate(x,y);c.rotate(rot+t*.007);c.scale(1,tilt);
+    const halo=c.createRadialGradient(0,0,0,0,0,scale*2.4);halo.addColorStop(0,hue+'a0');halo.addColorStop(.2,hue+'2a');halo.addColorStop(1,'#00000000');
+    c.globalAlpha=Math.min(1,lum*.65);c.fillStyle=halo;c.beginPath();c.arc(0,0,scale*2.4,0,Math.PI*2);c.fill();
+    const arms=2+Math.floor(r()*3);
+    for(let arm=0;arm<arms;arm++){
+      c.beginPath();
+      for(let j=0;j<=105;j++){
+        const q=j/105,theta=q*6.2*spiral+arm*(Math.PI*2/arms)+t*.05,rad=q*scale*2.4;
+        const xx=Math.cos(theta)*rad, yy=Math.sin(theta)*rad;
+        if(j===0)c.moveTo(xx,yy);else c.lineTo(xx,yy);
+      }
+      c.strokeStyle=pal[(i+arm)%3];c.globalAlpha=(.19+.20*dens)*Math.min(1.7,lum);c.lineWidth=Math.max(.6,scale*.075);c.shadowColor=hue;c.shadowBlur=scale*.20;c.stroke();
+      c.globalAlpha=.43*lum;c.lineWidth=Math.max(.35,scale*.018);c.shadowBlur=scale*.09;c.stroke();
+    }
+    c.shadowBlur=scale*.3;c.shadowColor=pal[2];c.fillStyle=pal[2];c.globalAlpha=Math.min(1,lum*.90);c.beginPath();c.arc(0,0,Math.max(.8,scale*.095),0,Math.PI*2);c.fill();
+    c.restore();
+   }
+  }else if(state.mode===1){
+   const n=Math.round(12+dens*43),bubbles=[];
+   for(let i=0;i<n;i++){
+    let x=r()*w,y=r()*h,rad=(.023+r()*.12)*k*zoom;
+    if(i===0){x=w*.34;y=h*.47;rad=k*.25*zoom;}if(i===1){x=w*.72;y=h*.6;rad=k*.19*zoom;}
+    bubbles.push([x,y,rad]);
+   }
+   for(let i=bubbles.length-1;i>=0;i--){
+    const [x,y,rad]=bubbles[i];let hue=pal[i%3];
+    c.save();c.translate(x,y);c.rotate(.09*warp*Math.sin(t*.3+i));
+    let halo=c.createRadialGradient(0,0,rad*.32,0,0,rad*1.5);
+    halo.addColorStop(0,'#00000000');halo.addColorStop(.67,hue+'16');halo.addColorStop(.84,hue+'45');halo.addColorStop(1,'#00000000');
+    c.fillStyle=halo;c.globalAlpha=Math.min(lum,1.5);c.fillRect(-rad*1.5,-rad*1.5,rad*3,rad*3);
+    c.save();c.beginPath();c.arc(0,0,rad,0,Math.PI*2);c.clip();c.strokeStyle=hue;c.lineWidth=.6;c.globalAlpha=.15*lum;
+    const step=Math.max(8,rad*.25);for(let q=-rad;q<=rad;q+=step){c.beginPath();c.moveTo(q,-rad);c.lineTo(q+Math.sin(t*.18)*rad*.1,rad);c.stroke();c.beginPath();c.moveTo(-rad,q);c.lineTo(rad,q);c.stroke();}c.restore();
+    c.strokeStyle=hue;c.shadowColor=hue;c.shadowBlur=20*lum;c.lineWidth=Math.max(1,rad*.024);c.globalAlpha=Math.min(.9,.38*lum);c.beginPath();c.ellipse(0,0,rad,rad*(.93+warp*.035*Math.sin(t*.2+i)),0,0,Math.PI*2);c.stroke();
+    c.globalAlpha=.25*lum;c.lineWidth=.7;c.beginPath();c.arc(0,0,rad*.58,0,Math.PI*2);c.stroke();c.restore();
+   }
+  }else if(state.mode===2){
+   const count=Math.round(3+dens*7),emit=[];
+   for(let i=0;i<count;i++)emit.push([r()*w,r()*h]);
+   for(let i=0;i<count;i++){
+    const [x,y]=emit[i];c.save();c.lineWidth=Math.max(.75,k*.0012);
+    c.strokeStyle=pal[i%3];c.shadowColor=pal[i%3];c.shadowBlur=4*lum;
+    for(let n=1;n<28;n++){
+      const radius=(n*17/spiral+(t*12*(1+i*.08))%Math.max(5,17/spiral))*zoom;
+      c.globalAlpha=(.025+.11*Math.pow(1-n/30,1.2))*lum;
+      c.beginPath();c.arc(x,y,radius,0,Math.PI*2);c.stroke();
+    }
+    const gg=c.createRadialGradient(x,y,0,x,y,k*.10);gg.addColorStop(0,pal[i%3]+'b8');gg.addColorStop(1,'#00000000');c.globalAlpha=.7;c.fillStyle=gg;c.fillRect(x-k*.10,y-k*.10,k*.2,k*.2);c.restore();
+   }
+  }else{
+   const centerX=w*.5,centerY=h*.5;
+   for(let i=0;i<135;i++){
+    const n=i,ang=n*2.39996322973+t*.02,rad=Math.sqrt(n/135)*k*.43*zoom;
+    const x=centerX+rad*Math.cos(ang),y=centerY+rad*Math.sin(ang),size=Math.max(1,(1.0-n/165)*k*.013);
+    c.globalAlpha=Math.min(1,.35+.6*lum);c.shadowBlur=size*3.5*lum;c.shadowColor=pal[i%3];c.fillStyle=pal[i%3];c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
+   }
+   c.save();c.translate(centerX,centerY);c.lineWidth=1;
+   for(let arm=0;arm<9;arm++){
+    c.beginPath();for(let j=0;j<190;j++){
+     const q=j/190,a=q*12*spiral+arm*Math.PI*2/9+t*.03,rad=q*k*.43*zoom;
+     const x=rad*Math.cos(a),y=rad*Math.sin(a);j===0?c.moveTo(x,y):c.lineTo(x,y);
+    }
+    c.strokeStyle=pal[arm%3];c.globalAlpha=.13*lum;c.shadowBlur=8;c.shadowColor=pal[arm%3];c.stroke();
+   }c.restore();
+  }
+  c.restore();
+ }
+
+ function sizing(){
+  const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;
+  const dpr=Math.min(1.15,window.devicePixelRatio||1);
+  let w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);
+  const cap=1550000;const s=Math.min(1,Math.sqrt(cap/(w*h)));w=Math.max(2,Math.round(w*s));h=Math.max(2,Math.round(h*s));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+  if(gl)gl.viewport(0,0,w,h);resizeNeeded=false;
+ }
+ function draw(){
+  if(!gl){drawCPU();return;}
+  gl.useProgram(prog);
+  gl.uniform2f(uni.resolution,canvas.width,canvas.height);
+  const r=canvas.getBoundingClientRect();
+  gl.uniform2f(uni.mouse,((pointer.x/r.width)-.5)*canvas.width/canvas.height,(.5-(pointer.y/r.height)));
+  gl.uniform1f(uni.time,playingTime);
+  gl.uniform1f(uni.seed,state.seed);
+  gl.uniform1f(uni.density,state.density/100);
+  gl.uniform1f(uni.spiral,state.spiral/100);
+  gl.uniform1f(uni.warp,state.warp/100);
+  gl.uniform1f(uni.glow,state.glow/100);
+  gl.uniform1f(uni.zoom,state.zoom/100);
+  gl.uniform1f(uni.pointer,(pointer.inside&&state.pointer)?1:0);
+  gl.uniform1i(uni.mode,state.mode);gl.uniform1i(uni.palette,state.palette);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+ }
+ function updateUI(){
+  document.querySelectorAll('.mode').forEach(b=>{const v=+b.dataset.mode;b.classList.toggle('active',v===state.mode);b.setAttribute('aria-pressed',v===state.mode?'true':'false');});
+  document.querySelectorAll('.swatch').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.palette===state.palette?'true':'false'));
+  ['density','spiral','warp','glow','zoom','speed'].forEach(k=>{const val=state[k];$(k).value=val;$(k+'Out').textContent=k==='density'?val+'%':k==='zoom'?(val/100).toFixed(2)+'×':(val/100).toFixed(2)+(k==='speed'?'×':'');});
+  $('pointer').checked=state.pointer;
+  $('pause').textContent=state.paused?'▶ Resume':'Ⅱ Pause';
+  $('seedDisplay').textContent='SEED '+state.seed;
+  const m=meta[state.mode];$('stageTitle').textContent=m.title;$('stageSub').textContent=m.sub;
+  $('mathTitle').textContent=m.mathTitle;$('mathIntro').textContent=m.intro;$('equation').textContent=m.eq;$('mathDesc').innerHTML=m.desc;
+ }
+ function sanitize(obj){
+  if(!obj||typeof obj!=='object')throw Error('Invalid recipe object');
+  for(const key of ['mode','palette','density','spiral','warp','glow','zoom','speed','seed']){
+   if(obj[key]!==undefined){const num=Number(obj[key]);if(!Number.isFinite(num))throw Error('Invalid '+key);state[key]=num;}
+  }
+  const ranges={mode:[0,3],palette:[0,4],density:[15,100],spiral:[20,300],warp:[0,200],glow:[25,250],zoom:[50,220],speed:[0,200],seed:[0,999999]};
+  Object.entries(ranges).forEach(([k,[mn,mx]])=>state[k]=Math.max(mn,Math.min(mx,Math.round(state[k]))));
+  if(typeof obj.pointer==='boolean')state.pointer=obj.pointer;
+  if(typeof obj.paused==='boolean')state.paused=obj.paused;
+  playingTime=0;updateUI();if(gl||ctx2d)draw();
+ }
+ function recipe(){return{app:'PhiMath Atelier',version:'0.1.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
+ function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+ function exportPNG(){
+  const oldW=canvas.width,oldH=canvas.height;
+  const target= Math.min(2,Math.sqrt(6400000/(oldW*oldH))); // 2× image, 6.4 MP cap
+  canvas.width=Math.round(oldW*target);canvas.height=Math.round(oldH*target);if(gl)gl.viewport(0,0,canvas.width,canvas.height);draw();
+  const prefix=['galaxy','foam','resonance','bloom'][state.mode];
+  canvas.toBlob(blob=>{if(blob){download(blob,`phimath-${prefix}-seed-${state.seed}.png`);toast('High-resolution PNG saved');}else toast('Image export unavailable');canvas.width=oldW;canvas.height=oldH;if(gl)gl.viewport(0,0,oldW,oldH);draw();},'image/png');
+ }
+ function persistHash(){try{const data={...recipe()};delete data.elapsedTime;const url=new URL(window.location.href);url.hash=encodeURIComponent(JSON.stringify(data));return url.href;}catch(_){return window.location.href;}}
+ function copyText(s){if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(s);const input=document.createElement('textarea');input.value=s;document.body.append(input);input.select();document.execCommand('copy');input.remove();return Promise.resolve();}
+ function bind(){
+  document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{state.mode=+b.dataset.mode;updateUI();draw();}));
+  document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{state.palette=+b.dataset.palette;updateUI();draw();}));
+  ['density','spiral','warp','glow','zoom','speed'].forEach(k=>$(k).addEventListener('input',e=>{state[k]=+e.target.value;updateUI();draw();}));
+  $('pointer').addEventListener('change',e=>{state.pointer=e.target.checked;draw();});
+  $('shuffle').addEventListener('click',()=>{state.seed=1+Math.floor(Math.random()*999999);playingTime=0;updateUI();draw();toast('A new mathematical universe has been seeded');});
+  $('reset').addEventListener('click',()=>{Object.assign(state,defaults);playingTime=0;updateUI();draw();toast('Equation parameters restored');});
+  $('pause').addEventListener('click',()=>{state.paused=!state.paused;updateUI();});
+  $('export').addEventListener('click',exportPNG);
+  $('saveRecipe').addEventListener('click',()=>{download(new Blob([JSON.stringify(recipe(),null,2)],{type:'application/json'}),`phimath-${state.seed}.json`);toast('Equation recipe saved');});
+  $('loadRecipe').addEventListener('click',()=>$('recipeFile').click());
+  $('recipeFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const obj=JSON.parse(await f.text());sanitize(obj);toast('Saved recipe loaded');}catch(err){toast('Could not load recipe: '+err.message);}e.target.value='';});
+  $('copyLink').addEventListener('click',()=>{copyText(persistHash()).then(()=>toast('Link copied with your equation settings')).catch(()=>toast('Clipboard unavailable'));});
+  canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;pointer.inside=true;});
+  canvas.addEventListener('pointerleave',()=>{pointer.inside=false;});
+  window.addEventListener('resize',()=>{resizeNeeded=true;});
+  window.addEventListener('keydown',e=>{
+   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+   if(e.code==='Space'){e.preventDefault();$('pause').click();}
+   else if(e.key.toLowerCase()==='r')$('shuffle').click();
+   else if(e.key.toLowerCase()==='s'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();$('export').click();}
+   else if('1234'.includes(e.key)&&e.key.length===1){state.mode=Number(e.key)-1;updateUI();draw();}
+  });
+  $('record').addEventListener('click',record);
+  window.addEventListener('hashchange',()=>{try{if(location.hash.length>4)sanitize(JSON.parse(decodeURIComponent(location.hash.slice(1))))}catch(_){}});
+ }
+ async function record(){
+  if(recording)return;
+  if(!canvas.captureStream||!window.MediaRecorder){toast('Video recording is not supported in this browser');return;}
+  const stream=canvas.captureStream(gl?30:10);
+  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+  if(!mime){toast('WebM recording is not available here');stream.getTracks().forEach(t=>t.stop());return;}
+  try{
+   const recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:7000000});
+   const chunks=[];recording=true;
+   const prevPause=state.paused;state.paused=false;updateUI();$('record').textContent='● Recording…';$('record').disabled=true;
+   recorder.addEventListener('dataavailable',e=>{if(e.data.size)chunks.push(e.data);});
+   recorder.addEventListener('stop',()=>{const blob=new Blob(chunks,{type:mime});if(blob.size>0){download(blob,`phimath-${state.seed}.webm`);toast('8-second animation saved');}else toast('Could not capture video');stream.getTracks().forEach(t=>t.stop());recording=false;state.paused=prevPause;updateUI();$('record').disabled=false;$('record').textContent='◉ Record 8s';});
+   recorder.start();setTimeout(()=>{if(recorder.state!=='inactive')recorder.stop();},8000);
+  }catch(err){recording=false;stream.getTracks().forEach(t=>t.stop());toast('Recording error: '+err.message);$('record').disabled=false;$('record').textContent='◉ Record 8s';}
+ }
+ function loop(now){
+  if(!active)return;
+  const delta=Math.min(.1,(now-last)/1000);last=now;
+  if(!state.paused)playingTime+=delta*state.speed/100;
+  if(resizeNeeded)sizing();
+  // Animate at a maximum of 30 FPS to be friendly to laptops and software renderers.
+  if(now-lastRender>=(gl?32:90)||lastRender===0){draw();lastRender=now;frameN++;}
+  tally+=delta;
+  if(tally>1.5){framerate=Math.round(frameN/tally);frameN=0;tally=0;$('stats').innerHTML=canvas.width+' × '+canvas.height+' PX<br>'+framerate+' FPS · SEED '+state.seed;}
+  requestAnimationFrame(loop);
+ }
+ try{
+  if(location.hash.length>4){try{sanitize(JSON.parse(decodeURIComponent(location.hash.slice(1))));}catch(_){}}
+  initGL();bind();updateUI();sizing();draw();requestAnimationFrame(loop);
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();active=false;toast('Graphics context lost. Reload this page to restart the engine.');});
+ }catch(err){console.error(err);const el=document.createElement('div');el.className='error';el.textContent='This browser could not start the mathematical renderer: '+err.message;stage.append(el);}
+})();
+</script>
+</body>
+</html>
