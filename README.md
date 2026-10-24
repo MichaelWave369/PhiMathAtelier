@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.4.0.
+**A Living Equation Studio**, v0.7.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, and `deck-mixer.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, and `geometry-lab.js` must be present in the same folder.
 
 ## Launch
 
@@ -218,3 +218,29 @@ Geometry inputs, colors, SVG dimensions and parameters are validated/bounded. Th
 ### Quality boundary
 
 The geometry lab is still an **independent Canvas2D stage**. Its active output does not become an A/B deck source and is not included in the original five-world WebM recorder. GitHub Actions validates constructors, audio bypass and reaction, recipe immutability/backward compatibility, SVG paths, and hostile-input handling. Browser verification remains necessary for SVG export, input selection, mobile controls and real-time playback.
+
+## Sacred Geometry as a real A/B deck source · v0.7.0
+
+The **Dual-Deck Visual Mixer** now offers **Sacred Geometry Lab** as the **sixth visual-world choice on Deck B**, in addition to the original five shader worlds. This is an actual mixer source in the **Blend, Wipe, Iris, MIDI CC, PNG and 8-second silent WebM** visual output, not a foreground overlay.
+
+### Try it
+
+1. Choose **Chromatic Warp** for the main stage/Deck A, then open **Dual-Deck Visual Mixer**.
+2. Check **Enable A/B deck mixing** and set the **Deck B World** to **Sacred Geometry Lab**.
+3. Under **Geometry construction**, choose **Flower of Life**, **13-point chords**, **Interlaced stars**, **Polar mandala**, **Golden spirals**, or **My Geometry Lab composition**.
+4. Slide the fader from A to B (keyboard **[** and **]**, or existing VJ LAB MIDI learn). Try **Blend**, **Wipe**, and **Iris** transitions.
+5. Start a VJ LAB demo beat or permitted music source. The five built-in geometric presets respond to levels automatically. **My Geometry Lab composition** uses the existing editor's saved layers, colors, background, rotation and audio-response preferences.
+6. Click **Open Geometry Lab editor** to edit your composition. Return to the main shader stage using **Return to Atelier worlds** and watch the live composition in Deck B.
+7. Save a PNG or record a silent WebM with the existing **studio** buttons to capture the A/B composite. Export JSON and reimport it to restore the Deck B preset. The geometry editor's SVG and JSON buttons continue to serve the geometry workbench independently.
+
+### Rendering details
+
+On **WebGL**, shader Deck A is drawn into framebuffer texture A, while Deck B's 2D geometric construction is rendered on an offscreen canvas and uploaded into framebuffer texture B with appropriate Y orientation. The existing GLSL mixer composites both using the normal fader transitions. On **Canvas2D fallback**, the source is drawn directly onto offscreen Deck B, then composited by the existing 2D fader. Both paths are covered by the dependency-free mock renderer tests.
+
+Performance stays bounded: geometry source resolution follows the existing lower-resolution deck target (70% GPU or 68% Canvas2D), mathematical paths are cached, and the base layers and imported recipes are strictly normalized.
+
+**Current intentional boundary:** Deck A remains one of the five original shader worlds; choosing geometry for Deck B disables **Swap A ↔ B** to avoid placing an unsupported geometry mode into Deck A's GLSL shader. Choose a normal shader world for Deck B to enable Swap again. The existing dedicated Geometry Lab editor still overlays the stage while editing, but returning to the stage restores the live A/B output. No extra microphone permissions, server processing, assets, or dependencies are introduced.
+
+### Tests
+
+Run the four existing test suites and the new `node tests/geometry-deck.mjs` suite. CI checks the CPU geometry branch, GPU texture upload and Y flip restoration, preserved old shader mixing, safe swap behavior, exported preset recipes, and correctness of the CPU Chromatic Warp deck target. A browser GPU and mobile smoke check is still needed after merge.
