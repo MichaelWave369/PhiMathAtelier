@@ -20,3 +20,4 @@ jobs:
           node tests/smoke.mjs
           node tests/vj-lab.mjs
           node tests/deck-mixer.mjs
+          node tests/geometry-lab.mjs
