@@ -24,6 +24,7 @@ jobs:
           mkdir -p site
           cp index.html site/index.html
           cp chromatic-warp.js site/chromatic-warp.js
+          cp vj-lab.js site/vj-lab.js
           touch site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
