@@ -16,4 +16,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check source, controls, and JavaScript
-        run: node tests/smoke.mjs
+        run: |
+          node tests/smoke.mjs
+          node tests/vj-lab.mjs
