@@ -4,16 +4,18 @@ import vm from 'node:vm';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const chromatic=readFileSync(new URL('../chromatic-warp.js',import.meta.url),'utf8');
+const vj=readFileSync(new URL('../vj-lab.js',import.meta.url),'utf8');
 assert.match(html, /<!doctype html>/i);
 assert.match(html, /<canvas\s+id="art"/);
 assert.match(html, /<\/html>/i);
 
 const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-assert.equal(scripts.length,4,'two GLSL shaders, one external renderer and a controller expected');
+assert.equal(scripts.length,5,'two GLSL shaders, two external renderers and a controller expected');
 const controller=scripts.filter(m=>!/x-shader/.test(m[1])&&!/src=/.test(m[1]));
 assert.equal(controller.length,1,'one application controller expected');
 new vm.Script(controller[0][2],{filename:'atelier-inline.js'});
 new vm.Script(chromatic,{filename:'chromatic-warp.js'});
+new vm.Script(vj,{filename:'vj-lab.js'});
 
 const fragment=scripts.find(m=>/id="fragmentShader"/.test(m[1]))?.[2];
 assert.ok(fragment,'missing fragment shader');
@@ -71,4 +73,6 @@ warp.draw(screen,canvas,state,0);const paused=drawn.slice();
 warp.draw(screen,canvas,state,1);
 assert.deepEqual(drawn,paused,'disabled palette cycling should freeze colors');
 
-console.log('PASS: five modes, six palettes, shader integration, JS syntax, six procedural fields, palette cycling and pause.');
+assert.ok(html.includes('src="vj-lab.js"'),'Missing VJ LAB loader');
+assert.ok(html.includes('id="vjLab"'),'Missing VJ LAB mount point');
+console.log('PASS: five modes, six palettes, two optional engines, JS syntax, six procedural fields, palette cycling and pause.');

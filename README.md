@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.2.0.
+**A Living Equation Studio**, v0.3.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. Both `index.html` and `chromatic-warp.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, and `vj-lab.js` must be present in the same folder.
 
 ## Launch
 
@@ -18,7 +18,7 @@ No npm install or build step is needed.
 
 ## Verify the source
 
-Run `node tests/smoke.mjs` with Node.js 22 or later to validate the standalone JavaScript, expected UI controls, five modes, six palettes and export features. The workflow also runs on pull requests.
+Run `node tests/smoke.mjs` and `node tests/vj-lab.mjs` with Node.js 22 or later to validate the standalone JavaScript, expected UI controls, five modes, six palettes and export features. The workflow also runs on pull requests.
 
 ## Controls
 
@@ -77,6 +77,55 @@ The shader quantizes this to 256 indices. During animation it shifts the indexed
 
 The motion is a visual illusion from palette shifts, not a physically modeled flow or scientific simulation.
 
+## VJ LAB · Live mathematical visual synthesizer (new in v0.3.0)
+
+VJ LAB analyzes audio locally and uses the levels to modulate any of the five existing mathematical worlds. **Base artwork parameters are not overwritten.** The default demo is idle until Start input is pressed, so existing artwork initially renders unchanged.
+
+### Try it
+
+1. Open the live GitHub Pages site over HTTPS and scroll to **VJ LAB** in the left sidebar.
+2. Choose a signal source and click **Start input**.
+3. Adjust the **Jungle Reactor**, **Ambient Drift**, or **Kick & Glow** preset and the wet/bass/mid/high depth controls.
+4. Click **Fullscreen stage** to send the output to a fullscreen browser/projector. Irregular-surface projection calibration remains future work.
+
+| Source | What it does |
+| --- | --- |
+| Demo beat | Synthetic beat and spectral bands; no permissions |
+| Manual bands | Three live energy sliders and manual Inject beat button |
+| Microphone / interface | Browser getUserMedia, analyzed without speaker monitor/feedback |
+| Local music file | Local audio element connected to Web Audio analyser and speakers; no upload |
+| Browser-tab capture | getDisplayMedia tab/screen picker; enable tab audio when prompted; availability varies |
+| External adapter | Versioned normalized-band frames from BackSpin96 or another trusted sender |
+
+FFT analysis splits bins into bass (~35–180 Hz), mids (~180–2300 Hz), and highs (~2300–11000 Hz). Bass drives deformation and zoom, mids drive harmonic/spiral frequency, highs drive glow and Chromatic Warp bands, while transients briefly boost brightness. Input gain is customizable, and the original artwork slider values remain intact.
+
+**MIDI:** In supported HTTPS browsers, Connect MIDI, select a target, click Learn next MIDI CC, and turn a controller knob. Mappings are local to the page session. Sysex is not requested.
+
+**Output:** The existing PNG and 8-second WebM recorder capture visuals. WebM recording does **not** include the analyzed music audio. The fullscreen stage works for displays and basic projector output.
+
+### BackSpin96 bridge contract
+
+The external source is opt-in. Use 0–1 finite numerical bass, mid, and high values, plus a boolean or 0/1 beat:
+
+**Same page:**
+
+    window.PhiVJLab.pushFrame({bass:0.8,mid:0.4,high:0.6,beat:true});
+
+**Same-origin pages/tabs (BroadcastChannel):**
+
+    const channel = new BroadcastChannel('phimath-vj-v1');
+    channel.postMessage({type:'phimath:vj:frame',version:1,frame:{bass:0.8,mid:0.4,high:0.6,beat:true}});
+
+**Cross-origin iframe/popup relationship:** In Atelier set the **exact trusted sender origin** in Allowed bridge origin; then from the related sender window:
+
+    atelierWindow.postMessage({type:'phimath:vj:frame',version:1,frame:{bass:0.8,mid:0.4,high:0.6,beat:true}},'https://michaelwave369.github.io');
+
+Atelier rejects postMessage from any origin other than the configured sender. Frames expire after 1.5 seconds and no raw audio is sent. This is an adapter contract, not a claim that BackSpin96 is already hooked up.
+
+### Browser notes
+
+WebGL is preferred, but the Canvas2D fallback accepts the same effective modulation. Audio capture and MIDI require explicit user permission and browser support, typically over HTTPS. All captured audio tracks are stopped on source change or Stop input; local file Object URLs are revoked.
+
 ## Developer notes
 
 - Core GLSL is in `<script id="fragmentShader">` inside `index.html`. Chromatic Warp's shaders and Canvas fallback live in `chromatic-warp.js` and are injected into the existing shader at initialization.
@@ -85,7 +134,7 @@ The motion is a visual illusion from palette shifts, not a physically modeled fl
 - Tested in an automated headless browser using the Canvas2D fallback. GPU shader rendering could not be validated in that restricted environment.
 - Each JSON recipe can reproduce the same **static** composition with the same engine version and settings. Animated output depends on elapsed time and device frame timing.
 - All computation is local. The app does not transmit artwork, recipes, or usage data.
-- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow deploys both files.
+- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow deploys all three files.
 
 ## Research distinction
 

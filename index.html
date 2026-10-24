@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.2 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.3 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -87,6 +87,7 @@
       <button type="button" class="btn" id="acidNext" style="width:100%">↝ Next mathematical scene</button>
       <p class="desc">The pattern is calculated once; its indexed colors flow. Speed is controlled by <strong>Time flow</strong>. Your palette choice also applies.</p>
     </section>
+    <section class="section vj-lab" id="vjLab" aria-label="Live mathematical visual synthesizer"></section>
     <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
       <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
     </section>
@@ -108,7 +109,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.2.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.3.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -281,6 +282,7 @@ void main(){
 }
 </script>
 <script src="chromatic-warp.js"></script>
+<script src="vj-lab.js"></script>
 <script>
 (()=>{
  'use strict';
@@ -295,6 +297,7 @@ void main(){
   {title:'Chromatic Warp',sub:'Chromatic Warp / Equation 05',mathTitle:'A pattern stands still. Its colors travel.',intro:'Inspired by classic 1992-era mathematical color cycling: index the geometry, then rotate a palette.',eq:'I(x,y) = ½ + 0.26 sin f(x,y) + 0.24 cos g(x,y)\nC(x,y,t) = P[⌊B · fract(I(x,y) + vt)⌋ / B]',desc:'Six original <strong>polar, wave, and interference fields</strong> yield a stationary 8-bit index field. The animated palette makes bands appear to flow. Inspired by the technique of AcidWarp, not a port or reproduction of its original formulas.'}
  ];
  const canvas=$('art'), stage=$('stage');
+ const vj=window.PhiVJLab.create({root:$('vjLab'),stage,canvas});
  let gl, ctx2d, prog, buffer, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
  let pointer={x:0,y:0,inside:false};
  let toastTimer, autoElapsed=0;
@@ -320,9 +323,10 @@ void main(){
  function rng(seed){let x=(seed|0)||369;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967295;};}
  function drawCPU(){
   if(!ctx2d)return;
-   if(state.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
-  const c=ctx2d,w=canvas.width,h=canvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[state.palette];
-  const r=rng(state.seed+19),dens=state.density/100,warp=state.warp/100,spiral=state.spiral/100,lum=state.glow/100,zoom=state.zoom/100;
+  const live=vj.effective(state);
+   if(live.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
+  const c=ctx2d,w=canvas.width,h=canvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[live.palette];
+  const r=rng(live.seed+19),dens=live.density/100,warp=live.warp/100,spiral=live.spiral/100,lum=live.glow/100,zoom=live.zoom/100;
   c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
   const bg=c.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,k*.82);bg.addColorStop(0,'#171024');bg.addColorStop(.5,'#090a17');bg.addColorStop(1,'#04050a');c.globalAlpha=.9;c.fillStyle=bg;c.fillRect(0,0,w,h);c.globalAlpha=1;
   c.globalCompositeOperation='screen';
@@ -332,7 +336,7 @@ void main(){
    c.globalAlpha=(.1+r()*.7)*Math.min(lum,1.8);c.fillStyle=i%9===0?pal[1]:'#dddaf8';c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
   }
   c.globalAlpha=1;
-  if(state.mode===0){
+  if(live.mode===0){
    const count=Math.round(8+dens*29);
    for(let i=0;i<count;i++){
     let x=r()*w,y=r()*h,scale=(.015+Math.pow(r(),3)*.115)*k*zoom,rot=r()*Math.PI*2,tilt=.45+r()*.7,hue=pal[i%3];
@@ -355,7 +359,7 @@ void main(){
     c.shadowBlur=scale*.3;c.shadowColor=pal[2];c.fillStyle=pal[2];c.globalAlpha=Math.min(1,lum*.90);c.beginPath();c.arc(0,0,Math.max(.8,scale*.095),0,Math.PI*2);c.fill();
     c.restore();
    }
-  }else if(state.mode===1){
+  }else if(live.mode===1){
    const n=Math.round(12+dens*43),bubbles=[];
    for(let i=0;i<n;i++){
     let x=r()*w,y=r()*h,rad=(.023+r()*.12)*k*zoom;
@@ -373,7 +377,7 @@ void main(){
     c.strokeStyle=hue;c.shadowColor=hue;c.shadowBlur=20*lum;c.lineWidth=Math.max(1,rad*.024);c.globalAlpha=Math.min(.9,.38*lum);c.beginPath();c.ellipse(0,0,rad,rad*(.93+warp*.035*Math.sin(t*.2+i)),0,0,Math.PI*2);c.stroke();
     c.globalAlpha=.25*lum;c.lineWidth=.7;c.beginPath();c.arc(0,0,rad*.58,0,Math.PI*2);c.stroke();c.restore();
    }
-  }else if(state.mode===2){
+  }else if(live.mode===2){
    const count=Math.round(3+dens*7),emit=[];
    for(let i=0;i<count;i++)emit.push([r()*w,r()*h]);
    for(let i=0;i<count;i++){
@@ -415,20 +419,21 @@ void main(){
  }
  function draw(){
   if(!gl){drawCPU();return;}
+  const live=vj.effective(state);
   gl.useProgram(prog);
   gl.uniform2f(uni.resolution,canvas.width,canvas.height);
   const r=canvas.getBoundingClientRect();
   gl.uniform2f(uni.mouse,((pointer.x/r.width)-.5)*canvas.width/canvas.height,(.5-(pointer.y/r.height)));
   gl.uniform1f(uni.time,playingTime);
-  gl.uniform1f(uni.seed,state.seed);
-  gl.uniform1f(uni.density,state.density/100);
-  gl.uniform1f(uni.spiral,state.spiral/100);
-  gl.uniform1f(uni.warp,state.warp/100);
-  gl.uniform1f(uni.glow,state.glow/100);
-  gl.uniform1f(uni.zoom,state.zoom/100);
-  gl.uniform1f(uni.pointer,(pointer.inside&&state.pointer)?1:0);
-  gl.uniform1i(uni.mode,state.mode);gl.uniform1i(uni.palette,state.palette);
-   gl.uniform1i(uni.acidPattern,state.acidPattern);gl.uniform1f(uni.acidBands,state.acidBands);gl.uniform1f(uni.acidCycle,state.acidCycle?1:0);
+  gl.uniform1f(uni.seed,live.seed);
+  gl.uniform1f(uni.density,live.density/100);
+  gl.uniform1f(uni.spiral,live.spiral/100);
+  gl.uniform1f(uni.warp,live.warp/100);
+  gl.uniform1f(uni.glow,live.glow/100);
+  gl.uniform1f(uni.zoom,live.zoom/100);
+  gl.uniform1f(uni.pointer,(pointer.inside&&live.pointer)?1:0);
+  gl.uniform1i(uni.mode,live.mode);gl.uniform1i(uni.palette,live.palette);
+   gl.uniform1i(uni.acidPattern,live.acidPattern);gl.uniform1f(uni.acidBands,live.acidBands);gl.uniform1f(uni.acidCycle,live.acidCycle?1:0);
   gl.drawArrays(gl.TRIANGLES,0,6);
  }
  function updateUI(){
@@ -461,7 +466,7 @@ void main(){
    autoElapsed=0;
   playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.2.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'0.3.0',...state,elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;
@@ -526,6 +531,7 @@ void main(){
     autoElapsed+=delta;
     if(autoElapsed>=20){state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();}
    }
+  vj.update(delta);
   if(resizeNeeded)sizing();
   // Animate at a maximum of 30 FPS to be friendly to laptops and software renderers.
   if(now-lastRender>=(gl?32:90)||lastRender===0){draw();lastRender=now;frameN++;}
