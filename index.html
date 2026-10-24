@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.6 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.7 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -112,7 +112,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.6.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.7.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -304,6 +304,14 @@ void main(){
  const canvas=$('art'), stage=$('stage');
  const mixer=window.PhiDeckMixer.create({
   root:$('deckMixer'),getA:()=>state,
+  renderGeometry:(deck,context,targetCanvas)=>{
+   const lab=window.PhiGeometryLab;
+   if(!lab?.renderTo)return false;
+   const chosen=deck.geometryPreset;
+   const recipe=chosen==='live'?(lab.instance?.getState()||{layers:lab.preset('flower')}):
+    {layers:lab.preset(chosen),selected:0,motion:24,background:'ink',audio:{enabled:true,wet:.85}};
+   return lab.renderTo(context,targetCanvas,recipe,playingTime,vj.levels);
+  },
   onSwap:next=>{const old={...state};Object.assign(state,next);updateUI();return old;},
   onChange:()=>{if(gl||ctx2d)draw();}
  });
@@ -336,7 +344,7 @@ void main(){
  function drawCPU(deck=state,targetCtx=ctx2d,targetCanvas=canvas){
   if(!targetCtx)return;
   const live=vj.effective(deck);
-   if(live.mode===4){window.PhiChromatic.draw(ctx2d,canvas,state,playingTime);return;}
+   if(live.mode===4){window.PhiChromatic.draw(targetCtx,targetCanvas,live,playingTime);return;}
   const c=targetCtx,w=targetCanvas.width,h=targetCanvas.height,k=Math.min(w,h),t=playingTime,pal=colorSchemes[live.palette];
   const r=rng(live.seed+19),dens=live.density/100,warp=live.warp/100,spiral=live.spiral/100,lum=live.glow/100,zoom=live.zoom/100;
   c.save();c.fillStyle='#04060d';c.fillRect(0,0,w,h);
@@ -497,7 +505,7 @@ void main(){
    autoElapsed=0;
   mixer.restore(obj.mixer);playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.4.0',...state,mixer:mixer.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'0.7.0',...state,mixer:mixer.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;

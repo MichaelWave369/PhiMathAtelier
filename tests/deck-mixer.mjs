@@ -19,12 +19,16 @@ const good=mixer.cleanDeck({mode:2,palette:1,seed:42,zoom:90});
 assert.equal(good.mode,2);assert.equal(good.palette,1);
 assert.equal(good.seed,42);assert.equal(good.zoom,90);
 const bounded=mixer.cleanDeck({mode:99,palette:-6,seed:Infinity,density:-100,zoom:900,warp:900});
-assert.equal(bounded.mode,4);assert.equal(bounded.palette,0);
+assert.equal(bounded.mode,5);assert.equal(bounded.palette,0);
 assert.equal(bounded.density,15);assert.equal(bounded.zoom,220);
 assert.equal(bounded.warp,200);assert.equal(bounded.seed,0);
 const invalid=mixer.cleanDeck({acidCycle:'no',pointer:1});
 assert.equal(invalid.acidCycle,true,'unsafe non-boolean imports must use defaults');
 assert.equal(invalid.pointer,true);
+const geometry=mixer.cleanDeck({mode:5,geometryPreset:'mandala'});
+assert.equal(geometry.mode,5);assert.equal(geometry.geometryPreset,'mandala');
+assert.equal(mixer.cleanDeck({mode:5,geometryPreset:'<script>'}).geometryPreset,'flower');
+assert.equal(mixer.cleanDeck({mode:1}).mode,1);
 
 const fallback=mixer.cleanMix(undefined);
 assert.equal(fallback.enabled,false,'legacy recipes must not accidentally enable mixing');
@@ -53,10 +57,15 @@ for(const token of ['id="deckMixer"','src="deck-mixer.js"',
   'mixer.drawGL(gl,canvas,renderSceneGL)','mixer.drawCPU(ctx2d,canvas',
   'mixer.exportSettings()','mixer.restore(obj.mixer)',
   'onCrossfade:v=>mixer.setCrossfade(v)',"mixer.nudge(-5)","mixer.nudge(5)",
-  "version:'0.4.0'","function renderSceneGL(deck,framebuffer=null"]){
+  "function renderSceneGL(deck,framebuffer=null"]){
   assert.ok(html.includes(token),'missing studio integration: '+token);
 }
+assert.match(html,/version:'0\.\d+\.\d+'/,'recipe must include a version tag');
 assert.ok(vjSrc.includes('<option value="crossfade">Deck A/B visual crossfader</option>'));
 assert.ok(vjSrc.includes("if(target==='crossfade')"));
 assert.ok(pages.includes('cp deck-mixer.js site/deck-mixer.js'),'deployment must copy mix engine');
+assert.ok(mixerSrc.includes('gl.texSubImage2D'),'Geometry must upload a canvas into GPU slot B');
+assert.ok(mixerSrc.includes('gl.UNPACK_FLIP_Y_WEBGL'),'Geometry upload must orient GL texture correctly');
+assert.ok(mixerSrc.includes('if(deckB.mode===5)'),'Geometry mode branch required');
+assert.ok(mixerSrc.includes('id="dmGeometryPreset"'),'Geometry source must offer preset selection');
 console.log('PASS: dual-deck sanitization, shader/compositor contract, CPU fallback, MIDI and recipe integration.');

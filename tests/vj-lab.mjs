@@ -55,9 +55,10 @@ for(const token of [
  'No audio is uploaded'
 ])assert.ok(source.includes(token),'Missing feature / safety check: '+token);
 for(const token of ['id="vjLab"','src="vj-lab.js"','vj.update(delta)',
- 'const live=vj.effective(deck)',"version:'0.4.0'"]){
+ 'const live=vj.effective(deck)']){
  assert.ok(html.includes(token),'missing integration: '+token);
 }
+assert.match(html,/version:'0\.\d+\.\d+'/,'recipe must include a version tag');
 assert.ok(!html.includes('state.warp+=')&&!html.includes('state.glow+='),'do not mutate canonical art values');
 
 console.log('PASS: VJ LAB maths, band analysis, bounds, safety checks and integration.');

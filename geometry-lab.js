@@ -1,4 +1,4 @@
-/* PhiMath Atelier v0.6.0 - Audio-reactive Sacred Geometry Laboratory.
+/* PhiMath Atelier v0.7.0 - Sacred Geometry laboratory and shared deck renderer.
  * Independently constructed Euclidean and polar geometry. No dependencies, no eval.
  * This optional 2D canvas lives over the existing GPU/Dual Deck stage. */
 (function(global){
@@ -141,6 +141,51 @@ function svgSnapshot(raw,seconds=0,width=1200,height=1200,bands=null){
  return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img">\n<title>PhiMath Atelier Geometry</title>\n<desc>Original Euclidean and parametric geometry; current animation-frame vector snapshot.</desc>\n<rect width="100%" height="100%" fill="'+background+'"/>'+stops+items+'</svg>';
 }
 
+
+// Shared studio renderer for the lab preview and the A/B mixer, using the
+// exact same geometric path constructors and draw-time audio transforms.
+const deckPathCache=new Map();
+function cachedPaths(l){
+ const key=[l.type,l.n,l.step,l.depth,l.turns,l.radius].join('/');
+ if(!deckPathCache.has(key)){
+  if(deckPathCache.size>=72)deckPathCache.clear();
+  deckPathCache.set(key,geometry(l));
+ }
+ return deckPathCache.get(key);
+}
+function renderTo(ctx,canvas,raw,seconds=0,bands=null){
+ if(!ctx||!canvas||!(canvas.width>0&&canvas.height>0))return false;
+ const recipe=sanitizeRecipe(raw),w=canvas.width,h=canvas.height,min=Math.min(w,h),dark=recipe.background!=='parchment';
+ const t=Number.isFinite(seconds)?seconds:0;
+ ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,w,h);
+ ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+ ctx.fillStyle=recipe.background==='parchment'?'#f2e8d6':recipe.background==='midnight'?'#050b22':'#08080e';
+ ctx.fillRect(0,0,w,h);
+ if(dark){
+  const grad=ctx.createRadialGradient(w/2,h/2,10,w/2,h/2,min*.72);
+  grad.addColorStop(0,recipe.background==='midnight'?'#17223d':'#251b25');grad.addColorStop(1,'#05060b');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+ }
+ const base=min*.455;
+ for(let i=0;i<recipe.layers.length;i++){
+  const l=recipe.layers[i];if(!l.visible)continue;
+  const pose=layerPose(l,i,recipe,t,bands);
+  ctx.save();ctx.translate(w/2,h/2);ctx.rotate(pose.angle);ctx.scale(base*pose.scale,base*pose.scale);
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=(i===recipe.selected?1.8:1.15)/base;
+  ctx.strokeStyle=recipe.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
+  ctx.shadowColor=l.color;ctx.shadowBlur=dark?11*pose.glow:0;ctx.globalAlpha=pose.opacity;
+  for(const path of cachedPaths(l)){
+   const pts=path.points;if(pts.length<2)continue;
+   ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+   for(let j=1;j<pts.length;j++)ctx.lineTo(pts[j][0],pts[j][1]);
+   if(path.closed)ctx.closePath();ctx.stroke();
+  }
+  ctx.restore();
+ }
+ ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
+ return true;
+}
+
 const css=[
  '.geometry-lab{border:1px solid #78614a;border-radius:15px;background:linear-gradient(160deg,#292016,#111722);padding:14px;margin:15px 0 24px}',
  '.geometry-lab h2{margin:0 0 6px;color:#f5d49d;font:21px Georgia,serif}',
@@ -219,37 +264,7 @@ function create({root,canvas,stage}){
   return buffer.get(key);
  }
  function readBands(){try{return typeof global.PhiAtelierAudioLevels==='function'?global.PhiAtelierAudioLevels():null;}catch(_){return null;}}
- function paint(ctx,w,h,bands=readBands()){
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.clearRect(0,0,w,h);
-  const dark=state.background!=='parchment',min=Math.min(w,h);
-  ctx.fillStyle=state.background==='parchment'?'#f2e8d6':state.background==='midnight'?'#050b22':'#08080e';
-  ctx.fillRect(0,0,w,h);
-  if(dark){
-   const grad=ctx.createRadialGradient(w/2,h/2,10,w/2,h/2,min*.72);
-   grad.addColorStop(0,state.background==='midnight'?'#17223d':'#251b25');grad.addColorStop(1,'#05060b');
-   ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
-  }
-  const scale=min*.455;
-  for(let i=0;i<state.layers.length;i++){
-   const l=state.layers[i];if(!l.visible)continue;
-   const pose=layerPose(l,i,state,clock,bands);
-   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(pose.angle);ctx.scale(scale*pose.scale,scale*pose.scale);
-   ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=(i===state.selected?1.8:1.15)/scale;
-   ctx.strokeStyle=state.background==='parchment'&&l.color==='#f0efea'?'#554d42':l.color;
-   ctx.shadowColor=l.color;ctx.shadowBlur=dark?11*pose.glow:0;
-   ctx.globalAlpha=pose.opacity;
-   for(const line of drawPaths(l)){
-    const pts=line.points;if(pts.length<2)continue;
-    ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
-    for(let j=1;j<pts.length;j++)ctx.lineTo(pts[j][0],pts[j][1]);
-    if(line.closed)ctx.closePath();ctx.stroke();
-   }
-   ctx.restore();
-  }
-  ctx.setTransform(1,0,0,1,0,0);
-  // Deliberately use the same renderer for on-screen visuals and PNG capture.
- }
+ function paint(ctx,w,h,bands=readBands()){return renderTo(ctx,{width:w,height:h},state,clock,bands);}
  function resize(){
   const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;
   let w=Math.round(r.width*Math.min(1.5,global.devicePixelRatio||1));
@@ -361,7 +376,7 @@ function create({root,canvas,stage}){
  sync();
  return {activate,getState:()=>JSON.parse(JSON.stringify(state)),setState:raw=>{state=sanitizeRecipe(raw);buffer.clear();sync();save();}};
 }
-global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,svgSnapshot,audioEffect,layerPose,create,PHI};
+global.PhiGeometryLab={geometry,equation,hexCells,layer,sanitizeRecipe,preset,svgSnapshot,audioEffect,layerPose,renderTo,create,PHI};
 if(typeof document!=='undefined'){
  const mount=()=>{const root=document.getElementById('geometryLab'),canvas=document.getElementById('geometryCanvas'),stage=document.getElementById('stage');
   if(root&&canvas&&stage){try{global.PhiGeometryLab.instance=create({root,canvas,stage});}catch(e){console.error('Geometry lab:',e);}}

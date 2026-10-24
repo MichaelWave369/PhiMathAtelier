@@ -21,3 +21,4 @@ jobs:
           node tests/vj-lab.mjs
           node tests/deck-mixer.mjs
           node tests/geometry-lab.mjs
+          node tests/geometry-deck.mjs
