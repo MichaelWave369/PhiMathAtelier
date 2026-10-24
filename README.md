@@ -185,7 +185,7 @@ Each is a **live, editable layer**, not an image. The seven selectable formula f
 
 **Click a visible stroke on the canvas** or choose a layer button to inspect it. Add up to 12 layers, remove layers, try three background treatments, enter fullscreen stage, and save a PNG or a versioned JSON geometry-only recipe. Recipes may be imported to reconstruct a static composition; preview motion uses the current time within the active session. The last edited recipe is also saved locally by the browser (when permitted).
 
-**Important interface boundary:** geometry uses its **own** rendering canvas, PNG action, and JSON recipe actions. The original application's PNG/WebM and share-link buttons still refer to the five existing shader worlds. Existing Dual-Deck and VJ settings are preserved. Geometry does not use mic audio or the WebGL deck compositor. No images, external services, copied esoteric artwork, unsafe evaluation of formulas, or external packages are required.
+**Important interface boundary:** geometry uses its **own** rendering canvas, PNG action, and JSON recipe actions. The original application's PNG/WebM and share-link buttons still refer to the five existing shader worlds. Existing Dual-Deck and VJ settings are preserved. As of v0.6.0, geometry can read VJ LAB's existing audio levels when opted in. It does not open a microphone itself and remains outside the WebGL deck compositor. No images, external services, copied esoteric artwork, unsafe evaluation of formulas, or external packages are required.
 
 ### Testing
 
@@ -197,3 +197,24 @@ Run:
     node tests/geometry-lab.mjs
 
 GitHub Actions runs these checks on pull requests and pushes to main. The geometry checks verify hex-lattice counts, all Metatron pairwise chords, modular-star cycles, φ growth by one quarter-turn, finite normalized vertices, bounded recipe imports, and deterministic static paths. Real-browser testing is still required for pointer hit-testing, mobile controls, fullscreen, and PNG capture.
+
+## Sacred Geometry Lab · VJ Reactor and SVG (v0.6.0)
+
+**Start here:** Enter Geometry Lab, choose a geometric preset, enable **React to VJ LAB audio levels**, then choose **Demo beat** and **Start input** in the existing VJ LAB panel.
+
+- Bass pulses the size; mids bend the rotation; highs and beats boost brightness and glow.
+- Response intensity runs 0–100%. It is disabled by default and is only a **draw-time transformation**, never a mutation of the mathematical geometry or stored recipe.
+- The existing VJ LAB handles audio input. The geometry panel simply reads the same normalized local meter for demo, manual controls, file, microphone, tab, or the approved external bridge. No new microphone permission, audio upload, or capture code.
+- The mini meter reports bass, mids, highs and beat strength. Click-to-inspect follows the displayed reactive geometry, not its original unmodulated positions. Older geometry recipes import with the audio checkbox off.
+
+### Editable SVG vectors
+
+Click **Vector SVG** inside the geometry panel to export a script-free, static **1600 × 1600 SVG snapshot** of the current frame. SVG contains real individually editable geometric paths with the current color, visibility, rotation, opacity and beat-responsive transformation.
+
+SVG is not an animation or a replacement for JSON recipes. Use **Recipe JSON** to recover editable numeric parameters in the Atelier and **Geometry PNG** to save raster art. The SVG output intentionally prioritizes sharp vector paths over Canvas2D's blurred glows.
+
+Geometry inputs, colors, SVG dimensions and parameters are validated/bounded. The generator does not accept or emit scripts, remote media, event handlers or arbitrary user formulas.
+
+### Quality boundary
+
+The geometry lab is still an **independent Canvas2D stage**. Its active output does not become an A/B deck source and is not included in the original five-world WebM recorder. GitHub Actions validates constructors, audio bypass and reaction, recipe immutability/backward compatibility, SVG paths, and hostile-input handling. Browser verification remains necessary for SVG export, input selection, mobile controls and real-time playback.
