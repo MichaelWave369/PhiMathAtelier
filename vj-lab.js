@@ -80,10 +80,10 @@
    '<label class="vj-field">MIDI knob learn<select id="vjMidiTarget"><option value="wet">Master modulation</option><option value="bass">Bass depth</option><option value="mid">Mid depth</option><option value="high">High depth</option></select></label>',
    '<button id="vjLearn" type="button" style="width:100%">Learn next MIDI CC</button>',
    '<div class="vj-footer"><label class="vj-field">Allowed bridge origin (optional)<input id="vjOrigin" type="text" placeholder="https://trusted-bridge.example" spellcheck="false"></label>',
-   '<div class="vj-desc">BackSpin96 bridge accepts normalized 0–1 bands via <code>PhiVJLab.pushFrame()</code> locally or a versioned postMessage from an explicitly allowed origin. Audio is never uploaded.</div></div>'
+   '<div class="vj-desc">BackSpin96 bridge accepts normalized 0–1 bands via <code>PhiVJLab.pushFrame()</code> locally, a same-origin BroadcastChannel, or postMessage from an explicitly allowed origin. Audio is never uploaded.</div></div>'
   ].join('');
   const el=id=>root.querySelector('#'+id);
-  let source='demo',audioContext=null,analyser=null,freq=null,stream=null,
+  let source='demo',audioContext=null,analyser=null,freq=null,stream=null,channel=null,
       audioElement=null,audioObjectURL=null,inputNode=null,midiAccess=null,
       midiLearn=false,midiBindings={},time=0,beatEnergy=0,beatAverage=.1,
       lastBeat=-10,streamToken=0,externalTime=-10,externalFrame=null,
@@ -200,6 +200,13 @@
    pushFrame(event.data.frame);
   }
   global.addEventListener('message',messageHandler);
+  if(typeof global.BroadcastChannel==='function'){
+   channel=new global.BroadcastChannel('phimath-vj-v1');
+   channel.onmessage=e=>{
+    if(source==='external'&&e?.data?.type==='phimath:vj:frame'&&e.data.version===1)
+     pushFrame(e.data.frame);
+   };
+  }
   function midiMessage(e){
    if((e.data[0]&0xf0)!==0xb0)return;
    const cc=e.data[1],value=e.data[2]/127;
@@ -271,6 +278,8 @@
   function effective(state){return modulation(state,current,settings);}
   function cleanup(){
    disposed=true;endSource();global.removeEventListener('message',messageHandler);
+   if(channel){channel.close();channel=null;}
+   global.PhiVJLab.pushFrame=()=>false;
    if(midiAccess){for(const i of midiAccess.inputs.values())i.onmidimessage=null;midiAccess.onstatechange=null;}
    if(audioContext)audioContext.close().catch(()=>{});
   }
@@ -293,6 +302,7 @@
   });
   // Default jungle profile makes incoming musical input noticeably expressive.
   setPreset('jungle');
+  global.PhiVJLab.pushFrame=pushFrame;
   return {update,effective,pushFrame,cleanup,modulation,bandsFromBins,
    get levels(){return {...current};},get source(){return source;}};
  }
