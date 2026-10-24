@@ -159,8 +159,41 @@ Two full-screen equation renders are more expensive than one. The mixer scales i
 - Tested in an automated headless browser using the Canvas2D fallback. GPU shader rendering could not be validated in that restricted environment.
 - Each JSON recipe can reproduce the same **static** composition with the same engine version and settings. Animated output depends on elapsed time and device frame timing.
 - All computation is local. The app does not transmit artwork, recipes, or usage data.
-- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow deploys all four files.
+- Designed to be hosted on GitHub Pages with `index.html` and `chromatic-warp.js` at repository root. The Pages workflow publishes the HTML and all four JavaScript modules.
 
 ## Research distinction
 
 The nested-bubble visual aesthetic is inspired by the NBG / DCF conceptual vocabulary, **not a validation, solver, or scientific numerical implementation of those systems**. In a later release, research-driven visualization should ingest independently specified experiment datasets with provenance and replay checks.
+
+## Sacred Geometry Laboratory · v0.5.0
+
+A new **opt-in, entirely procedural sacred geometry workbench** is available near the top of the left sidebar. Choose **Enter Geometry Lab** to display an independent Canvas2D drawing surface over the normal shader stage. **Return to Atelier worlds** restores the existing five worlds, mixer and VJ LAB without modifying their settings.
+
+This is a **mathematical construction and inspection tool**, not a reproduction of a historical ritual artifact or a claim that a symbol has physical or supernatural properties.
+
+### Included construction presets
+
+| Preset | Explicit mathematics |
+| --- | --- |
+| 13-circle Metatron construction | 13 centers on nested hexagons, 78 pairwise chords, 13 equal circles |
+| Flower of Life | Equal-radius circles on a finite hexagonal lattice (1 / 7 / 19 / 37 centers for depth 0 / 1 / 2 / 3) |
+| Interlaced star polygons | Regular n-gon vertices joined by modular step k, including disconnected cycles |
+| Polar mandala | Polar rose r = R cos(nθ) layered with stars and concentric circles |
+| Golden logarithmic spirals | r(θ) = R φ^((θ − 2πt)/(π/2)) with φ = (1+√5)/2, scaled by a factor φ every quarter-turn |
+
+Each is a **live, editable layer**, not an image. The seven selectable formula families are: 13-point chords, flower circles, star polygons, regular polygons, polar roses, golden logarithmic spirals, and concentric circles. Layer controls edit count, step, flower depth, spiral turns, radius, rotation, opacity, color, visibility, and spin direction. Use the global rotation slider to animate; Pause freezes geometry. The selected layer's **actual parametric equation** is displayed beneath the editor.
+
+**Click a visible stroke on the canvas** or choose a layer button to inspect it. Add up to 12 layers, remove layers, try three background treatments, enter fullscreen stage, and save a PNG or a versioned JSON geometry-only recipe. Recipes may be imported to reconstruct a static composition; preview motion uses the current time within the active session. The last edited recipe is also saved locally by the browser (when permitted).
+
+**Important interface boundary:** geometry uses its **own** rendering canvas, PNG action, and JSON recipe actions. The original application's PNG/WebM and share-link buttons still refer to the five existing shader worlds. Existing Dual-Deck and VJ settings are preserved. Geometry does not use mic audio or the WebGL deck compositor. No images, external services, copied esoteric artwork, unsafe evaluation of formulas, or external packages are required.
+
+### Testing
+
+Run:
+
+    node tests/smoke.mjs
+    node tests/vj-lab.mjs
+    node tests/deck-mixer.mjs
+    node tests/geometry-lab.mjs
+
+GitHub Actions runs these checks on pull requests and pushes to main. The geometry checks verify hex-lattice counts, all Metatron pairwise chords, modular-star cycles, φ growth by one quarter-turn, finite normalized vertices, bounded recipe imports, and deterministic static paths. Real-browser testing is still required for pointer hit-testing, mobile controls, fullscreen, and PNG capture.
