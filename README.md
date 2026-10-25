@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.9.0.
+**A Living Equation Studio**, v1.0.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, `performance-cues.js`, and `performance-timeline.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, `performance-cues.js`, `performance-timeline.js`, and `scene-dissolve.js` must be present in the same folder.
 
 ## Launch
 
@@ -309,3 +309,27 @@ Manual keyboard, mouse, MIDI, or separate cue recall takes priority and stops pl
 ### Verification
 
 The CI suite now includes **node tests/performance-timeline.mjs**, covering sequence timing, cue cuts, fader motion, looping, pause, skip, disabled mixer, invalid imports, manual overrides, backward-compatible recipes and Pages asset inclusion. Live browser QA should also verify WebGL/Canvas2D playback and recording.
+
+## Mathematical Performance Studio · v1.0.0
+
+**Scene-to-scene dissolves are now rendered inside the actual art canvas**, rather than being cuts or a CSS overlay. The dedicated `scene-dissolve.js` compositor captures a single **frozen frame** of the outgoing scene just before recalling the next cue, then blends that frame over the **live incoming shader or A/B geometry output**. It renders through WebGL alpha blending or the Canvas2D fallback. Normal high-resolution PNG and silent WebM capture the composited image; no new audio permissions or remote assets are introduced.
+
+### Arrange a show visually
+
+- The Performance Timeline now has a **proportional cue ruler**. Blocks indicate the relative duration of each step, name the cue, highlight the current step and jump to the editable step when clicked.
+- Each step adds **Scene dissolve** (0 / 0.5 / 1 / 2 / 4 / 8 seconds) to the existing Hold (0.5–60 seconds) and **Fade fader** (0 / 0.5 / 1 / 2 / 4 / 8 / 16 seconds).
+- The order of a step is: **snapshot dissolve from previous scene → hold the new scene → fade its own A/B controls → next cue**. Scene changes no longer need to be hard cuts; set Scene dissolve to **0** for a cut.
+- The scene dissolve uses the step's existing **Smooth or Linear** easing. Fade progress and time are included in the visual ruler's duration.
+- Existing v0.9 timelines lacking the `enter` field use **0 seconds**, preserving legacy cut behavior. Newly added steps default to a 1-second scene dissolve.
+
+### Technical honesty
+
+This is a **frozen outgoing frame / live incoming frame** dissolve. It does not independently re-render two continuously animated, live scenes at once. The outgoing scene is intentionally captured only once for much lower GPU cost. Its image blends over whatever the incoming shader, Geometry Lab, or A/B deck outputs. The compositor lives *after* the ordinary GPU/Canvas2D draw call; therefore the visual change is present in normal PNG screenshots and silent WebM recorded from the canvas. It is not audible and does not edit any original equation, layer, or saved cue.
+
+Pausing the timeline pauses the transition's clock. Manual fader/MIDI changes, manual cue-bank fade, deleting a referenced cue, or stopping the timeline cancel the compositor and restore unmodified live rendering. WebGL blend modes, snapshot upload orientation, and viewport are restored after drawing to avoid interfering with the next frame.
+
+### Verification
+
+GitHub Actions includes `node tests/scene-dissolve.mjs` alongside all seven existing test suites, covering snapshot capture, WebGL texture flip/upload reuse, alpha-over output, CPU path, easing, pause/cancel and Pages deployment. Browser QA remains required for real hardware GPU behavior, accurate timing under throttling, mobile timeline layout, high-resolution PNG and recorded WebM.
+
+**Still future scope:** Two simultaneously live scene renderers, beat-grid sync, BackSpin96/ParaCut bridges, and multitrack video editing are *not* claimed here.
