@@ -58,7 +58,7 @@ for(const token of ['id="vjLab"','src="vj-lab.js"','vj.update(delta)',
  'const live=vj.effective(deck)']){
  assert.ok(html.includes(token),'missing integration: '+token);
 }
-assert.match(html,/version:'0\.\d+\.\d+'/,'recipe must include a version tag');
+assert.match(html,/version:'\d+\.\d+\.\d+'/,'recipe must include a version tag');
 assert.ok(!html.includes('state.warp+=')&&!html.includes('state.glow+='),'do not mutate canonical art values');
 
 console.log('PASS: VJ LAB maths, band analysis, bounds, safety checks and integration.');

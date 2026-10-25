@@ -1,5 +1,5 @@
-/* ΦMath Atelier v0.9.0 · Performance Timeline
- * Deterministic offline cue sequencing. Cue changes are scene cuts.
+/* ΦMath Atelier v1.0.0 · Performance Timeline
+ * Deterministic offline cue sequencing with optional scene dissolves.
  * Hold each cue, then automate its A/B crossfader before the next cue.
  * The timeline never captures microphones, changes audio transport or evaluates code.
  */
@@ -8,6 +8,7 @@
 const KEY='phimath-performance-timeline-v1';
 const MAX_STEPS=16;
 const FADE_OPTIONS=[0,.5,1,2,4,8,16];
+const ENTER_OPTIONS=[0,.5,1,2,4,8];
 const clamp=(v,min,max,fallback=min)=>{
  const n=Number(v);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
 };
@@ -18,6 +19,7 @@ function cleanStep(raw){
  const slot=Number(raw.slot);
  if(!Number.isInteger(slot)||slot<0||slot>3)throw Error('Cue slot must be 1–4');
  return {slot,hold:roundHalf(clamp(raw.hold,.5,60,4)),
+  enter:ENTER_OPTIONS.includes(Number(raw.enter))?Number(raw.enter):0,
   fade:FADE_OPTIONS.includes(raw.fade)?raw.fade:2,
   target:Math.round(clamp(raw.target,0,100,100)),
   easing:['smooth','linear'].includes(raw.easing)?raw.easing:'smooth'};
@@ -33,7 +35,7 @@ function interpolate(a,b,elapsed,duration,easing='smooth'){
  return Math.round(clamp(a,0,100,0)+(clamp(b,0,100,100)-clamp(a,0,100,0))*p);
 }
 function durationOf(raw){
- const t=cleanTimeline(raw);return t.steps.reduce((sum,s)=>sum+s.hold+s.fade,0);
+ const t=cleanTimeline(raw);return t.steps.reduce((sum,s)=>sum+s.enter+s.hold+s.fade,0);
 }
 const css=[
  '.performance-timeline{background:linear-gradient(160deg,#1e1a2b,#111722);border:1px solid #6b5475;border-radius:15px;padding:14px;margin:16px 0 22px}',
@@ -46,6 +48,10 @@ const css=[
  '.performance-timeline button:focus-visible,.performance-timeline input:focus-visible,.performance-timeline select:focus-visible{outline:2px solid #f1ca92;outline-offset:2px}',
  '.performance-timeline button:disabled{opacity:.45;cursor:not-allowed}',
  '.performance-timeline .pt-tools{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px}',
+ '.performance-timeline .pt-overview{display:flex;gap:3px;min-height:48px;margin:8px 0 13px;overflow-x:auto;border:1px solid #454056;border-radius:8px;background:#0f1422;padding:5px}',
+ '.performance-timeline .pt-overview button{flex:1 0 33px;display:flex;flex-direction:column;justify-content:center;text-align:left;gap:2px;overflow:hidden;min-width:24px;background:#474059;padding:6px 4px}',
+ '.performance-timeline .pt-overview button[aria-current=true]{outline:2px solid #eccb93;outline-offset:-2px;background:#755c48}',
+ '.performance-timeline .pt-overview .pt-small{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}',
  '.performance-timeline .pt-steps{display:grid;gap:9px}',
  '.performance-timeline .pt-step{padding:10px;background:#171b2c;border:1px solid #3d4158;border-radius:10px}',
  '.performance-timeline .pt-step[data-playing=true]{border-color:#f0c58d;background:#2d2536}',
@@ -61,14 +67,15 @@ const css=[
  '.performance-timeline .pt-status{font:11px/1.5 system-ui;color:#ebd1b3;min-height:18px;margin-top:8px}',
  '@media(max-width:410px){.performance-timeline .pt-actions{grid-template-columns:1fr 1fr}}'
 ].join('\n');
-function create({root,cues,mixer}){
+function create({root,cues,mixer,onSceneSwitch,onCancelScene}){
  if(!root||!cues||typeof cues.recall!=='function'||!mixer)throw Error('Timeline requires cue bank and mixer');
  const style=document.createElement('style');style.textContent=css;document.head.append(style);
  root.innerHTML=[
   '<h2>◷ Performance Timeline</h2>',
-  '<p>Build a visual show from your four saved cues. Each step recalls a scene, holds it, then animates that scene’s A/B fader. Scene switches are cuts, not cross-dissolves.</p>',
+  '<p>Build a visual show from your saved cues. Enter via a scene dissolve (outgoing frozen frame over the live incoming scene), hold, then fade the new scene’s own A/B mixer.</p>',
   '<div class="pt-tools"><label>Add saved cue<select id="ptChoose"><option value="0">Cue 1</option><option value="1">Cue 2</option><option value="2">Cue 3</option><option value="3">Cue 4</option></select></label><button type="button" id="ptAdd">+ Add step</button></div>',
-  '<div id="ptRows" class="pt-steps" aria-label="Ordered cue timeline"></div>',
+  '<div id="ptOverview" class="pt-overview" aria-label="Show timeline overview"></div>',
+ '<div id="ptRows" class="pt-steps" aria-label="Ordered cue timeline"></div>',
   '<label style="margin-top:10px;display:flex;align-items:center;gap:7px"><input id="ptLoop" type="checkbox" style="width:auto"> Loop whole show</label>',
   '<div class="pt-actions"><button id="ptPlay" type="button">▶ Play</button><button id="ptPause" type="button">Ⅱ Pause</button><button id="ptNext" type="button">⏭ Next</button><button id="ptStop" type="button">■ Stop</button></div>',
   '<div id="ptReadout" class="pt-status" role="status" aria-live="polite">Sequence empty · add a saved cue</div>',
@@ -86,8 +93,8 @@ function create({root,cues,mixer}){
  const countLabel=()=>data.steps.length+' step'+(data.steps.length===1?'':'s')+' · '+durationOf(data).toFixed(1)+' sec / pass';
  function updateProgress(){
   const step=runtime&&data.steps[runtime.index];
-  const total=step?step.hold+step.fade:0;
-  const now=runtime?(runtime.phase==='hold'?runtime.elapsed:step.hold+runtime.elapsed):0;
+  const total=step?step.enter+step.hold+step.fade:0;
+  const now=runtime?(runtime.phase==='scene'?runtime.elapsed:runtime.phase==='hold'?step.enter+runtime.elapsed:step.enter+step.hold+runtime.elapsed):0;
   const percent=total?Math.round(Math.min(1,now/total)*100):0;
   $('ptBar').style.width=percent+'%';
   $('ptProgress').setAttribute('aria-valuenow',String(percent));
@@ -97,16 +104,19 @@ function create({root,cues,mixer}){
   $('ptStop').disabled=!runtime;
   $('ptPlay').disabled=!data.steps.length;
   data.steps.forEach((_,i)=>{
-   const row=$('ptStep'+i);
-   if(row)row.setAttribute('data-playing',String(!!runtime&&i===runtime.index));
+   const selected=String(!!runtime&&i===runtime.index);
+   const row=$('ptStep'+i);if(row)row.setAttribute('data-playing',selected);
+   const bar=$('ptOverviewStep'+i);if(bar)bar.setAttribute('aria-current',selected);
   });
  }
  function render(){
   const options=FADE_OPTIONS.map(x=>'<option value="'+x+'">'+x+' s</option>').join('');
+  const enterOptions=ENTER_OPTIONS.map(x=>'<option value="'+x+'">'+x+' s</option>').join('');
   $('ptRows').innerHTML=data.steps.length?data.steps.map((step,i)=>
    '<div id="ptStep'+i+'" class="pt-step" data-playing="false">'+
    '<div class="pt-step-header"><strong id="ptLabel'+i+'" class="pt-step-title"></strong><span style="font:10px system-ui;color:#a7a2be">#'+(i+1)+'</span></div>'+
    '<div class="pt-fields"><label>Cue<select id="ptSlot'+i+'"><option value="0">Cue 1</option><option value="1">Cue 2</option><option value="2">Cue 3</option><option value="3">Cue 4</option></select></label>'+
+   '<label>Scene dissolve (sec)<select id="ptEnter'+i+'">'+enterOptions+'</select></label>'+ 
    '<label>Hold (sec)<input id="ptHold'+i+'" type="number" min="0.5" max="60" step="0.5"></label>'+
    '<label>Fade (sec)<select id="ptFade'+i+'">'+options+'</select></label>'+
    '<label>Fade fader to<select id="ptTarget'+i+'"><option value="0">Deck A · 0%</option><option value="50">Center · 50%</option><option value="100">Deck B · 100%</option></select></label>'+
@@ -117,8 +127,8 @@ function create({root,cues,mixer}){
   ).join(''):'<p>No steps yet. Save a scene in Cue Bank, then add it here.</p>';
   data.steps.forEach((step,i)=>{
    $('ptLabel'+i).textContent=cueName(step.slot);
-   for(const [name,v] of [['Slot',step.slot],['Hold',step.hold],['Fade',step.fade],['Target',step.target],['Easing',step.easing]])$('pt'+name+i).value=String(v);
-   for(const [name,key] of [['Slot','slot'],['Hold','hold'],['Fade','fade'],['Target','target'],['Easing','easing']]){
+   for(const [name,v] of [['Slot',step.slot],['Enter',step.enter],['Hold',step.hold],['Fade',step.fade],['Target',step.target],['Easing',step.easing]])$('pt'+name+i).value=String(v);
+   for(const [name,key] of [['Slot','slot'],['Enter','enter'],['Hold','hold'],['Fade','fade'],['Target','target'],['Easing','easing']]){
     $('pt'+name+i).addEventListener('change',e=>updateStep(i,{[key]:e.target.value}));
    }
    $('ptUp'+i).disabled=i===0;$('ptDown'+i).disabled=i===data.steps.length-1;
@@ -127,6 +137,18 @@ function create({root,cues,mixer}){
    $('ptRemove'+i).addEventListener('click',()=>removeStep(i));
   });
   $('ptLoop').checked=data.loop;
+  // Visual show ruler: proportional cue blocks, with accessible jump-to-editor controls.
+  const overview=$('ptOverview');overview.replaceChildren();
+  const total=Math.max(.1,durationOf(data));
+  data.steps.forEach((step,i)=>{
+   const bar=document.createElement('button');bar.type='button';bar.id='ptOverviewStep'+i;
+   bar.style.flexGrow=String((step.enter+step.hold+step.fade)/total*100);
+   bar.setAttribute('aria-label','Edit step '+(i+1)+': '+cueName(step.slot));
+   const title=document.createElement('span');title.className='pt-small';title.textContent=(i+1)+'. '+cueName(step.slot);
+   const time=document.createElement('span');time.className='pt-small';time.textContent=(step.enter+step.hold+step.fade).toFixed(1)+'s';
+   bar.append(title,time);bar.addEventListener('click',()=>$('ptSlot'+i)?.focus?.());
+   overview.append(bar);
+  });
   updateProgress();
  }
  function editNotice(){stop('Playback stopped because timeline was edited.');persist();render();status('Sequence edited · '+countLabel());}
@@ -134,7 +156,7 @@ function create({root,cues,mixer}){
   if(data.steps.length>=MAX_STEPS){status('16-step maximum reached.');return false;}
   if(!Number.isInteger(slot)||slot<0||slot>3){status('Select Cue 1–4.');return false;}
   const last=data.steps[data.steps.length-1];
-  data.steps.push(cleanStep({slot,hold:4,fade:2,target:last?.target===100?0:100,easing:'smooth'}));
+  data.steps.push(cleanStep({slot,enter:1,hold:4,fade:2,target:last?.target===100?0:100,easing:'smooth'}));
   editNotice();return true;
  }
  function updateStep(index,change){
@@ -142,7 +164,7 @@ function create({root,cues,mixer}){
   const current=data.steps[index];
   // Input values are strings; coerce known numeric controls before validating.
   const next={...current,...change};
-  for(const key of ['slot','hold','fade','target'])if(Object.hasOwn(change,key))next[key]=Number(change[key]);
+  for(const key of ['slot','enter','hold','fade','target'])if(Object.hasOwn(change,key))next[key]=Number(change[key]);
   try{data.steps[index]=cleanStep(next);}catch(e){status(e.message);return false;}
   editNotice();return true;
  }
@@ -157,19 +179,24 @@ function create({root,cues,mixer}){
   data.steps.splice(index,1);editNotice();return true;
  }
  function stop(message='Timeline stopped · stage left at current frame.'){
-  const existed=!!runtime;runtime=null;updateProgress();
+  const existed=!!runtime;runtime=null;
+  if(typeof onCancelScene==='function')onCancelScene();
+  updateProgress();
   if(existed)status(message);
   return existed;
  }
  function loadStep(index){
   const step=data.steps[index];
-  if(!step||!cues.recall(step.slot)){stop('Timeline stopped: referenced Cue '+(step?step.slot+1:'?')+' is unavailable.');return false;}
-  // Recall intentionally resets mixer scenes and fader; take new manual revision baseline.
-  runtime.index=index;runtime.phase='hold';runtime.elapsed=0;
+  if(!step){stop('Timeline stopped: missing step.');return false;}
+  const dissolve=step.enter>0&&typeof onSceneSwitch==='function'&&onSceneSwitch(step.enter,step.easing)===true;
+  if(!cues.recall(step.slot)){stop('Timeline stopped: referenced Cue '+(step.slot+1)+' is unavailable.');return false;}
+  // Recall resets mixer scenes. The captured outgoing frame blends over the live next scene.
+  runtime.index=index;runtime.phase=dissolve?'scene':'hold';runtime.elapsed=0;
+  runtime.effectiveEnter=dissolve?step.enter:0;
   runtime.startFader=mixer.crossfade;runtime.lastFader=mixer.crossfade;
   runtime.revision=mixer.interactionRevision;
   runtime.effectiveFade=mixer.enabled?step.fade:0;
-  status('Step '+(index+1)+'/'+data.steps.length+' · '+cueName(step.slot)+' · hold');
+  status('Step '+(index+1)+'/'+data.steps.length+' · '+cueName(step.slot)+(dissolve?' · dissolving':' · hold'));
   updateProgress();return true;
  }
  function start(){
@@ -209,7 +236,7 @@ function create({root,cues,mixer}){
   let remaining=clamp(delta,0,.25,0),cycles=0;
   while(runtime&&remaining>=0&&cycles++<MAX_STEPS+2){
    const step=data.steps[runtime.index];
-   const duration=runtime.phase==='hold'?step.hold:runtime.effectiveFade;
+   const duration=runtime.phase==='scene'?runtime.effectiveEnter:runtime.phase==='hold'?step.hold:runtime.effectiveFade;
    const available=Math.max(0,duration-runtime.elapsed);
    const take=Math.min(available,remaining);
    runtime.elapsed+=take;remaining-=take;
@@ -218,7 +245,11 @@ function create({root,cues,mixer}){
     runtime.lastFader=value;mixer.setCrossfade(value/100,{silent:true});
    }
    if(runtime.elapsed+1e-9<duration)break;
-   if(runtime.phase==='hold'){
+   if(runtime.phase==='scene'){
+    runtime.phase='hold';runtime.elapsed=0;
+    status('Step '+(runtime.index+1)+'/'+data.steps.length+' · holding');
+    if(remaining===0)break;
+   }else if(runtime.phase==='hold'){
     runtime.phase='fade';runtime.elapsed=0;
     if(runtime.effectiveFade===0){
      if(mixer.enabled&&step.fade===0){runtime.lastFader=step.target;mixer.setCrossfade(step.target/100,{silent:true});}
@@ -253,7 +284,7 @@ function create({root,cues,mixer}){
  $('ptStop').addEventListener('click',()=>stop());
  $('ptLoop').addEventListener('change',e=>{data.loop=e.target.checked;persist();render();});
  $('ptExport').addEventListener('click',()=>{
-  download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'0.9.0',timeline:exportSettings()},null,2)],
+  download(new Blob([JSON.stringify({app:'PhiMath Atelier',version:'1.0.0',timeline:exportSettings()},null,2)],
    {type:'application/json'}),'phimath-performance-timeline.json');
   status('Timeline JSON saved.');
  });
