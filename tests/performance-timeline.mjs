@@ -38,7 +38,7 @@ assert.equal(api.cleanStep({slot:1,hold:4,fade:999,target:1000}).fade,2);
 assert.equal(api.cleanStep({slot:1,hold:4,fade:0,target:1000}).target,100);
 assert.equal(api.durationOf({steps:[{slot:0,hold:3,fade:2},{slot:1,hold:5,fade:1}]}),11);
 const data={steps:[{slot:0,hold:.5,fade:1,target:100,easing:'linear'}, {slot:1,hold:.5,fade:.5,target:0,easing:'smooth'}],loop:false};
-let revision=0,fadeStopCount=0,recalls=[];
+let revision=0,fadeStopCount=0,recalls=[],cueFading=false;
 let state={enabled:true,crossfade:0,style:'blend',deckB:{mode:5,geometryPreset:'flower'}};
 const mixer={
  get enabled(){return state.enabled;},get crossfade(){return state.crossfade;},
@@ -53,7 +53,7 @@ const snapshots=[
  {name:'One deck',mixer:{enabled:false,crossfade:60,style:'blend',deckB:{mode:2}}}
 ];
 const cues={
- get cues(){return snapshots;},
+ get cues(){return snapshots;},get fading(){return cueFading;},
  stopFade(){fadeStopCount++;},
  recall(i){if(!snapshots[i])return false;
   state={...snapshots[i].mixer};revision++;recalls.push(i);return true;}
@@ -113,6 +113,18 @@ line.updateStep(0,{target:50});
 assert.equal(line.playing,false,'editing during show cancels playback');
 assert.equal(recalls.length,num);
 assert.equal(line.exportSettings().steps[0].target,50);
+// A separate Cue Bank automation should take ownership immediately.
+assert.equal(line.start(),true);
+cueFading=true;
+assert.equal(line.tick(.25),false);
+assert.equal(line.playing,false,'competing standalone cue fade cancels timeline');
+cueFading=false;
+// The next cue may be deleted during a set; never keep retrying a missing step.
+assert.equal(line.start(),true);
+snapshots[1]=null;
+assert.equal(line.next(),false);
+assert.equal(line.playing,false,'cue deleted mid-show stops sequence');
+snapshots[1]={name:'Chromatic',mixer:{enabled:true,crossfade:100,style:'wipe',deckB:{mode:4}}};
 // Controls move and remove exactly the selected step.
 assert.equal(line.moveStep(0,1),true);
 assert.equal(line.exportSettings().steps[0].slot,1);
