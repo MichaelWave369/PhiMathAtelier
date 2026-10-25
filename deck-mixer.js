@@ -222,7 +222,7 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   mix=cleanMix(raw);deckB=cleanDeck(raw?.deckB);sync();emit();
  }
  function exportSettings(){return {...mix,deckB:{...deckB}};}
- function setCrossfade(value){mix.crossfade=Math.round(clamp(value,0,1)*100);sync();emit();}
+ function setCrossfade(value,opts){mix.crossfade=Math.round(clamp(value,0,1)*100);sync();if(opts?.silent!==true)emit();}
  function nudge(amount){setCrossfade((mix.crossfade+amount)/100);}
  function disable(){mix.enabled=false;sync();}
  return {drawGL,drawCPU,restore,exportSettings,setCrossfade,nudge,disable,
