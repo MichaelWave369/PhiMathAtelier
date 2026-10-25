@@ -27,6 +27,7 @@ jobs:
           cp vj-lab.js site/vj-lab.js
           cp deck-mixer.js site/deck-mixer.js
           cp geometry-lab.js site/geometry-lab.js
+          cp performance-cues.js site/performance-cues.js
           touch site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
