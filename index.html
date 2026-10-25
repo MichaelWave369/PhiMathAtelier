@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.9 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 1.0 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -114,7 +114,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.9.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V1.0.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -292,6 +292,7 @@ void main(){
 <script src="geometry-lab.js"></script>
 <script src="performance-cues.js"></script>
 <script src="performance-timeline.js"></script>
+<script src="scene-dissolve.js"></script>
 <script>
 (()=>{
  'use strict';
@@ -324,7 +325,12 @@ void main(){
   root:$('cueBank'),mixer,mixerAPI:window.PhiDeckMixer,getA:()=>state,
   setA:next=>{Object.assign(state,next);autoElapsed=0;updateUI();if(gl||ctx2d)draw();}
  });
- const timeline=window.PhiPerformanceTimeline.create({root:$('timeline'),cues,mixer});
+ const sceneFX=window.PhiSceneDissolve.create({canvas,document});
+ const timeline=window.PhiPerformanceTimeline.create({
+  root:$('timeline'),cues,mixer,
+  onSceneSwitch:(duration,easing)=>sceneFX.begin(duration,easing),
+  onCancelScene:()=>sceneFX.cancel()
+ });
  // Read-only local levels for geometry; audio capture remains entirely in VJ LAB.
  window.PhiAtelierAudioLevels=()=>vj.levels;
  let gl, ctx2d, prog, buffer, sceneAttrib, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
@@ -472,6 +478,7 @@ void main(){
   if(!gl){
    if(mixer.enabled)mixer.drawCPU(ctx2d,canvas,(deck,ctx,targetCanvas)=>drawCPU(deck,ctx,targetCanvas));
    else drawCPU();
+   sceneFX.drawCPU(ctx2d);
    return;
   }
   if(mixer.enabled){
@@ -483,6 +490,7 @@ void main(){
     renderSceneGL(state);
    }
   }else renderSceneGL(state);
+  sceneFX.drawGL(gl);
  }
  function updateUI(){
   document.querySelectorAll('.mode').forEach(b=>{const v=+b.dataset.mode;b.classList.toggle('active',v===state.mode);b.setAttribute('aria-pressed',v===state.mode?'true':'false');});
@@ -514,7 +522,7 @@ void main(){
    autoElapsed=0;
   timeline.stop();mixer.restore(obj.mixer);if(obj.cueBank!==undefined)cues.restore(obj.cueBank);if(obj.timeline!==undefined)timeline.restore(obj.timeline);playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.9.0',...state,mixer:mixer.exportSettings(),cueBank:cues.exportSettings(),timeline:timeline.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'1.0.0',...state,mixer:mixer.exportSettings(),cueBank:cues.exportSettings(),timeline:timeline.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;
@@ -585,6 +593,7 @@ void main(){
   vj.update(delta);
   cues.tick(delta);
   timeline.tick(delta);
+  sceneFX.tick(delta,timeline.paused);
   if(resizeNeeded)sizing();
   // Animate at a maximum of 30 FPS to be friendly to laptops and software renderers.
   if(now-lastRender>=(gl?32:90)||lastRender===0){draw();lastRender=now;frameN++;}
