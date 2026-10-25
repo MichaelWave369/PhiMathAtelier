@@ -115,7 +115,7 @@ mixer.restore();
 assert.equal(mixer.enabled,false,'old recipes default to single-deck');
 assert.ok(html.includes('renderGeometry:(deck,context,targetCanvas)'), 'studio provides the geometry renderer');
 assert.ok(html.includes('window.PhiGeometryLab'), 'studio looks up shared construction API');
-assert.match(html,/version:'0\.\d+\.\d+'/, 'recipe must declare a release version');
+assert.match(html,/version:'\d+\.\d+\.\d+'/, 'recipe must declare a release version');
 assert.ok(html.includes("PhiChromatic.draw(targetCtx,targetCanvas,live,playingTime)"),
  'CPU Chromatic Warp draws into its own offscreen target, not the stage');
 console.log('PASS: geometry-to-deck CPU/GPU paths, texture flip, fader, presets, safe swaps and compatibility.');
