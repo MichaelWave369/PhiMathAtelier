@@ -39,7 +39,7 @@
   <header class="topbar">
     <div class="brand-icon" aria-hidden="true">Φ</div>
     <div class="brand"><b>Math Atelier</b><small>A LIVING EQUATION STUDIO</small></div>
-    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.7 · OFFLINE</span></div>
+    <div class="top-right"><span class="top-note">Original generative mathematics. Infinite variations.</span><span class="pill">ENGINE 0.8 · OFFLINE</span></div>
   </header>
   <aside class="panel left" aria-label="Art controls">
     <section class="section"><div class="section-head"><span class="smallcaps">01 / Mathematical worlds</span><span>5 engines</span></div>
@@ -89,6 +89,7 @@
       <p class="desc">The pattern is calculated once; its indexed colors flow. Speed is controlled by <strong>Time flow</strong>. Your palette choice also applies.</p>
     </section>
     <section class="section deck-mixer" id="deckMixer" aria-label="Two-deck visual crossfader"></section>
+    <section class="section performance-cues" id="cueBank" aria-label="Four-slot live performance cue bank"></section>
     <section class="section vj-lab" id="vjLab" aria-label="Live mathematical visual synthesizer"></section>
     <section class="section"><div class="section-head"><span class="smallcaps">04 / Animation</span></div>
       <div class="rowbtn"><button class="btn flex" id="pause" type="button">Ⅱ Pause</button><button class="btn flex" id="record" type="button">◉ Record 8s</button></div>
@@ -112,7 +113,7 @@
       <div class="statcard"><div class="top"><strong>Experiment boundary</strong><span>ART ≠ PHYSICS</span></div><p>Nested Foam is artistic inspiration, not a simulation or validation of NBG / Dynamic Causal Foam research.</p></div>
     </section>
   </aside>
-  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.7.0</span></footer>
+  <footer class="foot"><span><b>Φ</b> MATHEMATICAL IMAGINATION</span><span class="hide-sm">·</span><span class="hide-sm">Made of functions, not photographs</span><span class="spacer"></span><span id="seedDisplay" class="seed">SEED 369</span><span class="hide-sm">·</span><span>V0.8.0</span></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="vertexShader" type="x-shader/x-vertex">
@@ -288,6 +289,7 @@ void main(){
 <script src="vj-lab.js"></script>
 <script src="deck-mixer.js"></script>
 <script src="geometry-lab.js"></script>
+<script src="performance-cues.js"></script>
 <script>
 (()=>{
  'use strict';
@@ -316,6 +318,10 @@ void main(){
   onChange:()=>{if(gl||ctx2d)draw();}
  });
  const vj=window.PhiVJLab.create({root:$('vjLab'),stage,canvas,onCrossfade:v=>mixer.setCrossfade(v)});
+ const cues=window.PhiPerformanceCues.create({
+  root:$('cueBank'),mixer,mixerAPI:window.PhiDeckMixer,getA:()=>state,
+  setA:next=>{Object.assign(state,next);autoElapsed=0;updateUI();if(gl||ctx2d)draw();}
+ });
  // Read-only local levels for geometry; audio capture remains entirely in VJ LAB.
  window.PhiAtelierAudioLevels=()=>vj.levels;
  let gl, ctx2d, prog, buffer, sceneAttrib, uni={}, playingTime=0,last=performance.now(),lastRender=0,framerate=0,frameN=0,tally=0,active=true,resizeNeeded=true,recording=false;
@@ -503,9 +509,9 @@ void main(){
    if(typeof obj.acidCycle==='boolean')state.acidCycle=obj.acidCycle;
    if(typeof obj.acidAuto==='boolean')state.acidAuto=obj.acidAuto;
    autoElapsed=0;
-  mixer.restore(obj.mixer);playingTime=0;updateUI();if(gl||ctx2d)draw();
+  mixer.restore(obj.mixer);if(obj.cueBank!==undefined)cues.restore(obj.cueBank);playingTime=0;updateUI();if(gl||ctx2d)draw();
  }
- function recipe(){return{app:'PhiMath Atelier',version:'0.7.0',...state,mixer:mixer.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
+ function recipe(){return{app:'PhiMath Atelier',version:'0.8.0',...state,mixer:mixer.exportSettings(),cueBank:cues.exportSettings(),elapsedTime:Number(playingTime.toFixed(3))};}
  function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
  function exportPNG(){
   const oldW=canvas.width,oldH=canvas.height;
@@ -539,7 +545,8 @@ void main(){
   window.addEventListener('resize',()=>{resizeNeeded=true;});
   window.addEventListener('keydown',e=>{
    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
-   if(e.code==='Space'){e.preventDefault();$('pause').click();}
+   if(e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&/^Digit[1-4]$/.test(e.code)){e.preventDefault();cues.recall(Number(e.code.slice(-1))-1);}
+   else if(e.code==='Space'){e.preventDefault();$('pause').click();}
    else if(e.key.toLowerCase()==='r')$('shuffle').click();
    else if(e.key==='['){e.preventDefault();mixer.nudge(-5);}
     else if(e.key===']'){e.preventDefault();mixer.nudge(5);}
@@ -573,6 +580,7 @@ void main(){
     if(autoElapsed>=20){state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();}
    }
   vj.update(delta);
+  cues.tick(delta);
   if(resizeNeeded)sizing();
   // Animate at a maximum of 30 FPS to be friendly to laptops and software renderers.
   if(now-lastRender>=(gl?32:90)||lastRender===0){draw();lastRender=now;frameN++;}

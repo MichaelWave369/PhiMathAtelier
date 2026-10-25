@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.7.0.
+**A Living Equation Studio**, v0.8.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, and `geometry-lab.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, and `performance-cues.js` must be present in the same folder.
 
 ## Launch
 
@@ -244,3 +244,41 @@ Performance stays bounded: geometry source resolution follows the existing lower
 ### Tests
 
 Run the four existing test suites and the new `node tests/geometry-deck.mjs` suite. CI checks the CPU geometry branch, GPU texture upload and Y flip restoration, preserved old shader mixing, safe swap behavior, exported preset recipes, and correctness of the CPU Chromatic Warp deck target. A browser GPU and mobile smoke check is still needed after merge.
+
+
+## Live Performance Cue Bank · v0.8.0
+
+PhiMath Atelier now includes a **four-slot visual cue bank** between the Dual-Deck Mixer and VJ LAB. It works entirely client-side without accounts, external services or a build step. It does not alter the five source shader worlds or the Sacred Geometry engine.
+
+### Store and recall a scene
+
+1. Configure the primary shader artwork (Deck A) and the independent Deck B world (including a geometry preset or **My Geometry Lab composition**).
+2. Enable the A/B mixer and select your Blend/Wipe/Iris transition and crossfader position.
+3. In **Performance Cue Bank**, type a short name and click **Save** for any of the four slots.
+4. Change the worlds and fader, then choose **Recall** to restore both Deck A parameters and Deck B settings, transition style, enabled state and crossfade position. Keyboard shortcuts **Shift+1–4** recall the corresponding cue when focus is not inside a text field or slider.
+5. You can rename a saved cue; names are rendered as plain text, never interpreted as HTML.
+
+A cue stores the primary artwork's shader parameters (mode, seed, palette, warp, zoom, density, speed, pointer, chromatic pattern/cycle/auto controls) and the full sanitized **mixer state** (Deck B parameters/preset, crossfader, enabled state and transition). Global pause/play state and elapsed animation time intentionally are **not** restored, allowing musical timing to continue uninterrupted.
+
+**My Geometry Lab composition** remains a reference to your current local editor composition. Cue recall restores that source selection, not a frozen copy of the geometry editor's separate layer recipe. For a self-contained geometry-layer transfer, also export its Geometry JSON recipe.
+
+### Time your transitions
+
+Choose a **0.5 / 1 / 2 / 4 / 8 / 16 second** fade with either smooth S-curve or linear interpolation. **Fade to A** and **Fade to B** animate the current visual crossfader to its corresponding endpoint. You must first enable A/B mixing. **Stop fade** cancels without resetting the current fader position.
+
+**Manual takeover always wins:** dragging the crossfader, using [ and ] or touching an assigned MIDI CC cancels an in-progress fade when the resulting fader position changes. The automation writes quiet fader updates; the existing 30-FPS render loop performs the drawing. These are **visual** fades only; music playback, BPM detection, beat quantization, and audio crossfading are not changed.
+
+### Save and restore your show
+
+- The four cue slots and fade preferences are stored in this browser's **localStorage**, if allowed.
+- Click **Cue JSON** to export the four-slot cue bank; **Import cues** restores it after validating and bounding the inputs. Imported cue files are capped at 160 KB.
+- The regular Atelier **Equation recipe JSON** and copied state link now also include a sanitized **cueBank** object, so a complete scene set can be shared. Importing older v0.1–v0.7 recipes **does not erase** your locally stored cue slots.
+- **Clear bank** empties all four slots without changing the current A/B stage.
+
+### Quality and compatibility
+
+Run:
+
+    node tests/performance-cues.mjs
+
+The continuous-integration workflow includes this suite alongside the original shader/Chromatic Warp, VJ LAB, dual-deck, geometry and geometry-deck tests. Automated coverage checks safe imports, snapshot recall, mute/default behavior, predictable fades, manual override, saved cue names, local persistence and deployment asset presence. Manual browser QA should cover the crossfader while recording WebM, MIDI interruption, keyboard focus, mobile controls, exported JSON and GitHub Pages deployment.
