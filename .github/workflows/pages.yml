@@ -29,6 +29,7 @@ jobs:
           cp geometry-lab.js site/geometry-lab.js
           cp performance-cues.js site/performance-cues.js
           cp performance-timeline.js site/performance-timeline.js
+          cp scene-dissolve.js site/scene-dissolve.js
           touch site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
