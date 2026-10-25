@@ -140,7 +140,8 @@ for(let k=0;k<6;k++)line.tick(.25);
 assert.equal(line.playing,true,'loop restarts after last cue');
 assert.ok(recalls.filter(n=>n===0).length>=3);
 line.stop();
-element('ptLoop').trigger('change');
+element('ptLoop').checked=false; // simulate unchecking a checked browser checkbox
+ element('ptLoop').trigger('change');
 assert.equal(line.exportSettings().loop,false,'loop control updates stored settings');
 assert.ok(records.has('phimath-performance-timeline-v1'));
 assert.ok(!rootUI.innerHTML.includes('<script'),'dynamic cue names never injected as HTML');
