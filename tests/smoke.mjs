@@ -10,7 +10,7 @@ assert.match(html, /<canvas\s+id="art"/);
 assert.match(html, /<\/html>/i);
 
 const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-assert.equal(scripts.length,9,'two GLSL shaders, six external modules and a controller expected');
+assert.equal(scripts.length,10,'two GLSL shaders, seven external modules and a controller expected');
 const controller=scripts.filter(m=>!/x-shader/.test(m[1])&&!/src=/.test(m[1]));
 assert.equal(controller.length,1,'one application controller expected');
 new vm.Script(controller[0][2],{filename:'atelier-inline.js'});
@@ -85,4 +85,7 @@ assert.ok(html.includes('cues.tick(delta)'),'Missing cue animation frame integra
 assert.ok(html.includes('id="timeline"'),'Missing performance timeline mount');
 assert.ok(html.includes('src="performance-timeline.js"'),'Missing performance timeline loader');
 assert.ok(html.includes('timeline.tick(delta)'),'Missing performance timeline animation tick');
+assert.ok(html.includes('src="scene-dissolve.js"'),'Missing scene dissolve engine');
+assert.ok(html.includes('sceneFX.drawGL(gl)'),'Missing GPU composite');
+assert.ok(html.includes('sceneFX.drawCPU(ctx2d)'),'Missing CPU composite');
 console.log('PASS: five modes, six palettes, two optional engines, JS syntax, six procedural fields, palette cycling and pause.');
