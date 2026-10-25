@@ -12,13 +12,14 @@ function element(id){
  if(elements.has(id))return elements.get(id);
  const handlers=new Map();
  const value={id,value:'',checked:false,disabled:false,hidden:false,textContent:'',innerHTML:'',style:{},
+  replaceChildren(){this.children=[];},append(child){(this.children??=[]).push(child);},focus(){},
   attrs:{},addEventListener(name,fn){handlers.set(name,fn);},
   setAttribute(k,v){this.attrs[k]=String(v);},
   trigger(name,v){if(v!==undefined)this.value=v;const fn=handlers.get(name);
    assert.ok(fn,'missing '+name+' handler on '+id);return fn({target:this});}};
  elements.set(id,value);return value;
 }
-const document={head:{append(){}},createElement(){return {textContent:''};}};
+const document={head:{append(){}},createElement(){return {textContent:'',style:{},setAttribute(){},append(){},addEventListener(){}};}};
 const context={window:{},document,localStorage};
 new vm.Script(code,{filename:'performance-timeline.js'}).runInNewContext(context);
 const api=context.window.PhiPerformanceTimeline;
@@ -37,8 +38,12 @@ assert.equal(api.cleanStep({slot:1,hold:-20,target:1000}).hold,.5);
 assert.equal(api.cleanStep({slot:1,hold:4,fade:999,target:1000}).fade,2);
 assert.equal(api.cleanStep({slot:1,hold:4,fade:0,target:1000}).target,100);
 assert.equal(api.durationOf({steps:[{slot:0,hold:3,fade:2},{slot:1,hold:5,fade:1}]}),11);
+assert.equal(api.cleanStep({slot:0}).enter,0,'legacy steps remain instant cuts');
+assert.equal(api.cleanStep({slot:0,enter:2}).enter,2);
+assert.equal(api.cleanStep({slot:0,enter:999}).enter,0,'scene dissolve bounded to allowed durations');
+assert.equal(api.durationOf({steps:[{slot:0,enter:2,hold:3,fade:1}]}),6);
 const data={steps:[{slot:0,hold:.5,fade:1,target:100,easing:'linear'}, {slot:1,hold:.5,fade:.5,target:0,easing:'smooth'}],loop:false};
-let revision=0,fadeStopCount=0,recalls=[],cueFading=false;
+let revision=0,fadeStopCount=0,recalls=[],cueFading=false,sceneBegins=[],sceneCancels=0;
 let state={enabled:true,crossfade:0,style:'blend',deckB:{mode:5,geometryPreset:'flower'}};
 const mixer={
  get enabled(){return state.enabled;},get crossfade(){return state.crossfade;},
@@ -59,7 +64,7 @@ const cues={
   state={...snapshots[i].mixer};revision++;recalls.push(i);return true;}
 };
 const rootUI={innerHTML:'',querySelector(selector){return element(selector.slice(1));}};
-const line=api.create({root:rootUI,cues,mixer});
+const line=api.create({root:rootUI,cues,mixer,onSceneSwitch:(sec,easing)=>{sceneBegins.push({sec,easing});return true;},onCancelScene:()=>{sceneCancels++;}});
 assert.ok(rootUI.innerHTML.includes('ptRows'));
 assert.ok(rootUI.innerHTML.includes('ptPlay'));
 assert.equal(line.playing,false);
@@ -70,8 +75,8 @@ assert.equal(line.addStep(2),true);
 assert.equal(line.start(),false,'missing referenced cue blocks show');
 assert.match(element('ptReadout').textContent,/Save Cue 3/);
 assert.equal(line.removeStep(2),true);
-assert.equal(line.updateStep(0,{hold:.5,fade:1,target:100,easing:'linear'}),true);
-assert.equal(line.updateStep(1,{hold:.5,fade:.5,target:0,easing:'smooth'}),true);
+assert.equal(line.updateStep(0,{enter:0,hold:.5,fade:1,target:100,easing:'linear'}),true);
+assert.equal(line.updateStep(1,{enter:0,hold:.5,fade:.5,target:0,easing:'smooth'}),true);
 assert.equal(line.start(),true);
 assert.equal(fadeStopCount,1,'cue bank automation stopped before show');
 assert.deepEqual(recalls,[0],'first cue recalled at sequence start');
@@ -152,6 +157,17 @@ for(let k=0;k<6;k++)line.tick(.25);
 assert.equal(line.playing,true,'loop restarts after last cue');
 assert.ok(recalls.filter(n=>n===0).length>=3);
 line.stop();
+assert.equal(line.restore({steps:[{slot:0,enter:1,hold:.5,fade:0,target:100}]}),true);
+assert.equal(line.start(),true);
+assert.equal(line.current.phase,'scene','new cue enters via snapshot dissolve');
+assert.deepEqual(JSON.parse(JSON.stringify(sceneBegins.at(-1))),{sec:1,easing:'smooth'});
+for(let k=0;k<4;k++)line.tick(.25);
+assert.equal(line.current.phase,'hold','scene dissolve proceeds to hold phase');
+line.tick(.25);line.tick(.25);
+assert.equal(line.playing,false);
+assert.ok(sceneCancels>=1,'scene compositor is canceled on stop/completion');
+assert.ok(rootUI.innerHTML.includes('ptOverview'),'visual timeline overview is mounted');
+assert.equal(line.exportSettings().steps[0].enter,1,'scene dissolve retained in recipe');
 element('ptLoop').checked=false; // simulate unchecking a checked browser checkbox
  element('ptLoop').trigger('change');
 assert.equal(line.exportSettings().loop,false,'loop control updates stored settings');
