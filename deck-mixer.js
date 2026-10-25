@@ -1,4 +1,4 @@
-/* ΦMath Atelier v0.7.0 · Two-deck crossfader with vector geometry source.
+/* ΦMath Atelier v0.9.0 · Two-deck crossfader with vector geometry source.
  * Independent mathematical deck scenes with GPU framebuffer compositing
  * and a CPU Canvas fallback. No network or external dependencies. */
 (function(global){
@@ -59,7 +59,7 @@ const css=[
 function create({root,getA,onChange,onSwap,renderGeometry}){
  if(!root||typeof getA!=='function')throw Error('Deck mixer requires root and getA');
  const st=document.createElement('style');st.textContent=css;document.head.append(st);
- let deckB=cleanDeck({}),mix=cleanMix({});
+ let deckB=cleanDeck({}),mix=cleanMix({}),interactionRevision=0;
  root.innerHTML=[
   '<h2>⊞ Dual-Deck Visual Mixer</h2>',
   '<p class="dm-muted">Blend a shader world on Deck A into any mathematical world or Sacred Geometry on Deck B. Both respond to the existing VJ LAB.</p>',
@@ -104,20 +104,20 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   el('dmSwap').title=deckB.mode===5?'Deck A is shader-only; choose a shader for Deck B to swap.':'';
   for(const k of ['density','spiral','warp','glow','zoom']){el('dm-'+k).value=deckB[k];el('dmOut-'+k).textContent=String(deckB[k]);}
  };
- el('dmEnabled').addEventListener('change',e=>{mix.enabled=e.target.checked;sync();emit();});
- el('dmFader').addEventListener('input',e=>{mix.crossfade=Math.round(clamp(e.target.value,0,100));sync();emit();});
- el('dmStyle').addEventListener('change',e=>{mix.style=['blend','wipe','iris'].includes(e.target.value)?e.target.value:'blend';sync();emit();});
+ el('dmEnabled').addEventListener('change',e=>{interactionRevision++;mix.enabled=e.target.checked;sync();emit();});
+ el('dmFader').addEventListener('input',e=>{interactionRevision++;mix.crossfade=Math.round(clamp(e.target.value,0,100));sync();emit();});
+ el('dmStyle').addEventListener('change',e=>{interactionRevision++;mix.style=['blend','wipe','iris'].includes(e.target.value)?e.target.value:'blend';sync();emit();});
  for(const [id,k] of [['dmMode','mode'],['dmPalette','palette'],['dmSeed','seed'],['dmPattern','acidPattern'],
   ...['density','spiral','warp','glow','zoom'].map(x=>['dm-'+x,x])]){
-  el(id).addEventListener('input',e=>{deckB=cleanDeck({[k]:Number(e.target.value)},deckB);sync();emit();});
+  el(id).addEventListener('input',e=>{interactionRevision++;deckB=cleanDeck({[k]:Number(e.target.value)},deckB);sync();emit();});
  }
- el('dmGeometryPreset').addEventListener('change',e=>{deckB.geometryPreset=e.target.value;sync();emit();});
+ el('dmGeometryPreset').addEventListener('change',e=>{interactionRevision++;deckB.geometryPreset=e.target.value;sync();emit();});
  el('dmEditGeometry').addEventListener('click',()=>{global.PhiGeometryLab?.instance?.activate(true);});
- el('dmClone').addEventListener('click',()=>{deckB=cleanDeck(getA());sync();emit();});
- el('dmRandom').addEventListener('click',()=>{if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
+ el('dmClone').addEventListener('click',()=>{interactionRevision++;deckB=cleanDeck(getA());sync();emit();});
+ el('dmRandom').addEventListener('click',()=>{interactionRevision++;if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
  el('dmSwap').addEventListener('click',()=>{
   if(deckB.mode===5||typeof onSwap!=='function')return; // Main Deck A supports shader modes 0–4 only.
-  const previous=onSwap({...deckB});deckB=cleanDeck(previous);sync();emit();
+  interactionRevision++;const previous=onSwap({...deckB});deckB=cleanDeck(previous);sync();emit();
  });
  sync();
  let gpu=null,cpu=null;
@@ -219,15 +219,15 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
  }
  function restore(raw){
   // Old recipes have no mixer data: remain single-deck on load.
-  mix=cleanMix(raw);deckB=cleanDeck(raw?.deckB);sync();emit();
+  interactionRevision++;mix=cleanMix(raw);deckB=cleanDeck(raw?.deckB);sync();emit();
  }
  function exportSettings(){return {...mix,deckB:{...deckB}};}
- function setCrossfade(value,opts){mix.crossfade=Math.round(clamp(value,0,1)*100);sync();if(opts?.silent!==true)emit();}
+ function setCrossfade(value,opts){if(opts?.silent!==true)interactionRevision++;mix.crossfade=Math.round(clamp(value,0,1)*100);sync();if(opts?.silent!==true)emit();}
  function nudge(amount){setCrossfade((mix.crossfade+amount)/100);}
- function disable(){mix.enabled=false;sync();}
+ function disable(){interactionRevision++;mix.enabled=false;sync();}
  return {drawGL,drawCPU,restore,exportSettings,setCrossfade,nudge,disable,
   get enabled(){return mix.enabled;},get crossfade(){return mix.crossfade;},
-  get deckB(){return {...deckB};}};
+  get deckB(){return {...deckB};},get interactionRevision(){return interactionRevision;}};
 }
 global.PhiDeckMixer={create,cleanDeck,cleanMix,vertex,fragment};
 })(window);

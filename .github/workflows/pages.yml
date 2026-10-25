@@ -28,6 +28,7 @@ jobs:
           cp deck-mixer.js site/deck-mixer.js
           cp geometry-lab.js site/geometry-lab.js
           cp performance-cues.js site/performance-cues.js
+          cp performance-timeline.js site/performance-timeline.js
           touch site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

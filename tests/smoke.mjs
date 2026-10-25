@@ -10,7 +10,7 @@ assert.match(html, /<canvas\s+id="art"/);
 assert.match(html, /<\/html>/i);
 
 const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-assert.equal(scripts.length,8,'two GLSL shaders, five external modules and a controller expected');
+assert.equal(scripts.length,9,'two GLSL shaders, six external modules and a controller expected');
 const controller=scripts.filter(m=>!/x-shader/.test(m[1])&&!/src=/.test(m[1]));
 assert.equal(controller.length,1,'one application controller expected');
 new vm.Script(controller[0][2],{filename:'atelier-inline.js'});
@@ -82,4 +82,7 @@ assert.ok(html.includes('id="geometryCanvas"'),'Missing geometry canvas');
 assert.ok(html.includes('src="performance-cues.js"'),'Missing cue bank module');
 assert.ok(html.includes('id="cueBank"'),'Missing cue bank mount point');
 assert.ok(html.includes('cues.tick(delta)'),'Missing cue animation frame integration');
+assert.ok(html.includes('id="timeline"'),'Missing performance timeline mount');
+assert.ok(html.includes('src="performance-timeline.js"'),'Missing performance timeline loader');
+assert.ok(html.includes('timeline.tick(delta)'),'Missing performance timeline animation tick');
 console.log('PASS: five modes, six palettes, two optional engines, JS syntax, six procedural fields, palette cycling and pause.');
