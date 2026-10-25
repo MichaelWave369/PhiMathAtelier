@@ -163,7 +163,7 @@ function create({root,cues,mixer}){
  }
  function loadStep(index){
   const step=data.steps[index];
-  if(!step||!cues.recall(step.slot))return false;
+  if(!step||!cues.recall(step.slot)){stop('Timeline stopped: referenced Cue '+(step?step.slot+1:'?')+' is unavailable.');return false;}
   // Recall intentionally resets mixer scenes and fader; take new manual revision baseline.
   runtime.index=index;runtime.phase='hold';runtime.elapsed=0;
   runtime.startFader=mixer.crossfade;runtime.lastFader=mixer.crossfade;
@@ -175,7 +175,7 @@ function create({root,cues,mixer}){
  function start(){
   if(!data.steps.length){status('Add at least one cue to the timeline.');return false;}
   const missing=data.steps.findIndex(step=>!cues.cues[step.slot]);
-  if(missing!==-1){status('Save Cue '+(data.steps[missing].slot+1)+' before playing step '+(missing+1)+'.');return false;}
+  if(missing!==-1){stop();status('Save Cue '+(data.steps[missing].slot+1)+' before playing step '+(missing+1)+'.');return false;}
   stop();
   cues.stopFade();runtime={index:0,phase:'hold',elapsed:0,paused:false,revision:0,startFader:0,lastFader:0,effectiveFade:0};
   return loadStep(0);
@@ -201,6 +201,7 @@ function create({root,cues,mixer}){
  }
  function tick(delta){
   if(!runtime)return false;
+  if(cues.fading){stop('Timeline stopped: cue bank fade took over.');return false;}
   if(mixer.interactionRevision!==runtime.revision||mixer.crossfade!==runtime.lastFader){
    stop('Timeline stopped: manual fader / mixer takeover.');return false;
   }
