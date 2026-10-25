@@ -1,8 +1,8 @@
 # ΦMath Atelier
 
-**A Living Equation Studio**, v0.8.0.
+**A Living Equation Studio**, v0.9.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, and `performance-cues.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, `performance-cues.js`, and `performance-timeline.js` must be present in the same folder.
 
 ## Launch
 
@@ -282,3 +282,30 @@ Run:
     node tests/performance-cues.mjs
 
 The continuous-integration workflow includes this suite alongside the original shader/Chromatic Warp, VJ LAB, dual-deck, geometry and geometry-deck tests. Automated coverage checks safe imports, snapshot recall, mute/default behavior, predictable fades, manual override, saved cue names, local persistence and deployment asset presence. Manual browser QA should cover the crossfader while recording WebM, MIDI interruption, keyboard focus, mobile controls, exported JSON and GitHub Pages deployment.
+
+## Performance Timeline · v0.9.0
+
+The **Performance Timeline** panel below Cue Bank creates an offline 1–16-step visual show from the four previously saved cues. Audio transport remains untouched.
+
+### Make a show
+
+1. Save your favorite A/B combinations in **Cue 1–4** in Performance Cue Bank. Reuse a cue in multiple timeline steps.
+2. Select a slot and **Add step**. For each step, set **Hold** (0.5–60 s), **Fade** (0/0.5/1/2/4/8/16 s), **Fade fader to** (Deck A, Center, Deck B), and **Easing** (Smooth/Linear).
+3. Rearrange steps with **↑/↓**, remove unwanted steps, and press **Play**, **Pause/Resume**, **Next**, **Stop**, or enable **Loop whole show**.
+4. Use **Timeline JSON** to export/import the sequence on its own. Standard Atelier recipe JSON and copied state links now include a timeline object alongside Cue Bank. Older recipes without timeline leave locally saved sequences untouched.
+
+**Crucial transition distinction:** Cue recall changes the shader and geometry worlds instantly, a **scene cut**. The step then holds the new cue and animates **its own A/B fader** from the recalled position to the target. This is *not* a complete cross-dissolve between arbitrary consecutive scene snapshots. If a recalled cue has the mixer disabled, its A/B fade is skipped; the saved single-deck scene is respected.
+
+Manual keyboard, mouse, MIDI, or separate cue recall takes priority and stops playback. Starting a timeline first stops a competing standalone Cue Bank fader automation. Editing steps stops a running sequence. Playback is intentionally **not restored on reload**.
+
+### Offline safety and scope
+
+- Timeline steps are cue *references*, not full copies of the four scenes. Export the Cue Bank separately when transferring a show to a different browser.
+- A missing referenced cue blocks playback and is identified in the status message.
+- Timing parameters and cue indices are bounded, inputs are sanitized, JSON imports capped to **64 KB**, and cue names use textContent, not interpreted HTML.
+- LocalStorage saves the arrangement when browser storage is available. No remote APIs, downloads of outside media, or microphone permissions are added.
+- Browser-frame timing is not sample accurate. Beat-grid quantization, audio fades, and arbitrary scene-to-scene framebuffer dissolves are not included.
+
+### Verification
+
+The CI suite now includes **node tests/performance-timeline.mjs**, covering sequence timing, cue cuts, fader motion, looping, pause, skip, disabled mixer, invalid imports, manual overrides, backward-compatible recipes and Pages asset inclusion. Live browser QA should also verify WebGL/Canvas2D playback and recording.
