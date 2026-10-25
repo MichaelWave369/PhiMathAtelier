@@ -145,7 +145,7 @@ function create({root,mixer,mixerAPI,getA,setA}){
   if(mixer.crossfade!==fade.last){stopFade('Fade canceled by manual crossfader movement.');return false;}
   fade.elapsed=Math.min(fade.duration,fade.elapsed+clamp(delta,0,.25,0));
   const value=faderAt(fade.from,fade.to,fade.elapsed,fade.duration,fade.easing);
-  fade.last=value;mixer.setCrossfade(value/100);
+  fade.last=value;mixer.setCrossfade(value/100,{silent:true});
   if(fade.elapsed>=fade.duration){
    const destination=fade.to===0?'A':'B';
    fade=null;sync();status('Fade complete · Deck '+destination+'.');return true;
