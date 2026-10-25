@@ -24,3 +24,4 @@ jobs:
           node tests/geometry-deck.mjs
           node tests/performance-cues.mjs
           node tests/performance-timeline.mjs
+          node tests/scene-dissolve.mjs
