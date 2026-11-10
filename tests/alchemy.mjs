@@ -14,7 +14,6 @@ assert.match(html,/src="\.\/alchemy-engine\.js"/);
 assert.match(html,/src="\.\/alchemy-ui\.js"/);
 assert.match(index,/href="alchemy\.html"/);
 assert.match(html,/Great Work Engine/);
-assert.ok(!/(?:https?:)?\/\//.test(html.replace(/<!doctype html>[\s\S]*?<style>/,'' ).split('</style>')[0]) || true);
 const sandbox={window:{devicePixelRatio:1,requestAnimationFrame:()=>{}}};
 new vm.Script(source).runInNewContext(sandbox);
 const api=sandbox.window.PhiAlchemy;
