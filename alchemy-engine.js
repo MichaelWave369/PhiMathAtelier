@@ -106,7 +106,7 @@
       ctx.beginPath();ctx.arc(px,py,r,0,TAU);ctx.fill();
     }
     ctx.save();ctx.translate(cX,cY);
-    const scale=min*.32*Math.min(1.25,w/h>1.8?1:1);
+    const scale=min*.32;
     ctx.scale(scale,scale);
     ctx.lineCap='round';ctx.lineJoin='round';
     function trace(points,closed,index,alpha=1) {
@@ -176,7 +176,7 @@
         trace(pts,true,k,.35);
       }
     }
-    ctx.save();ctx.scale(1,-1);
+    ctx.save();
     ctx.font='.23px Georgia, "Segoe UI Symbol", serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.shadowBlur=.05*scale;ctx.shadowColor=color(0,.7);
     ctx.fillStyle=color(24,.93,84);
