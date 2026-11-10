@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b13">
+<meta name="description" content="PhiMath Atelier Alchemical Atlas: an original offline symbolic-mathematics and visual transformation laboratory.">
+<title>Great Work Engine · ΦMath Atelier</title>
+<style>
+:root{color-scheme:dark;--bg:#080a12;--panel:#11141e;--line:#303241;--text:#f7efe7;--sub:#a4a6b6;--gold:#eac58d;--active:#2d2630;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}button,input,select{font:inherit}button{cursor:pointer}a{color:#f1ca99}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #f5ce91;outline-offset:3px}
+header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 24px;border-bottom:1px solid var(--line);background:#10121c}
+.brand{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}.mark{border:1px solid #b18b5e;border-radius:12px;display:grid;place-items:center;width:43px;height:43px;color:var(--gold);font:27px Georgia,serif;background:linear-gradient(145deg,#352a33,#14131c)}.brand strong{display:block;font:24px Georgia,serif}.brand small{display:block;font-size:10px;letter-spacing:2px;color:#baa58e;margin-top:2px}
+.head-right{display:flex;gap:12px;align-items:center;font-size:12px}.tag{border:1px solid #75624f;border-radius:999px;padding:7px 11px;color:#e2c39a;white-space:nowrap}
+.layout{display:grid;grid-template-columns:280px minmax(360px,1fr) 320px;min-height:calc(100dvh - 80px)}aside{background:var(--panel);padding:20px 18px;border-right:1px solid var(--line)}aside:last-child{border-left:1px solid var(--line);border-right:0}section{margin-bottom:24px}
+h1,h2,h3,p{margin:0}h1{font:30px Georgia,serif}h2{font:21px Georgia,serif;margin:0 0 12px}p{line-height:1.55}small,.sub{color:var(--sub)}.kicker{font-size:10px;font-weight:800;letter-spacing:2px;color:#d6b78b;text-transform:uppercase;display:block;margin-bottom:10px}
+.lead{font-size:12px;color:var(--sub);margin:10px 0 16px}
+.symbols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.symbol{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:72px;padding:8px 2px;background:#191c29;color:#e5e0e1;border:1px solid #353745;border-radius:12px;overflow-wrap:anywhere}
+.symbol .glyph{font:26px Georgia,"Segoe UI Symbol",serif;color:#edcd9e}.symbol .name{font-size:10px;text-align:center}
+.symbol[aria-pressed="true"],.stage-button[aria-current="step"]{background:#3b2d2b;border-color:#edbd79;color:#fff0d7;box-shadow:inset 0 0 0 1px #edbd7940}
+.symbol:hover,.stage-button:hover{border-color:#b79a77}
+.workspace{position:relative;display:flex;flex-direction:column;min-height:0;background:#050610}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:17px 23px;gap:14px;background:#0d101a;border-bottom:1px solid #242737}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}.tab{background:#1b1e2c;border:1px solid #393b4d;color:#c9c9d5;border-radius:8px;padding:9px 11px;font-size:12px}
+.tab[aria-pressed="true"]{background:#3c2d30;border-color:#d6ad75;color:#ffe0ab}
+#crucible{width:100%;height:min(65dvh,710px);min-height:350px;display:block;touch-action:none}
+.visual{position:relative;flex:1;min-height:350px}.visual-label{position:absolute;top:18px;left:22px;max-width:70%;pointer-events:none}.visual-label strong{display:block;font:22px Georgia,serif;text-shadow:0 2px 10px #000}.visual-label small{font-size:11px;text-transform:uppercase;letter-spacing:1px}.visual-hint{position:absolute;bottom:15px;left:20px;right:20px;display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#bec2d3;pointer-events:none}
+.stage-chain{padding:18px 22px;border-top:1px solid #2e3040;background:#10131d}
+.stage-buttons{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px}
+.stage-button{border:1px solid #343747;border-radius:8px;background:#181b27;color:#ddd4d0;padding:10px 4px;font-size:11px;text-align:center}
+.stage-button b{display:block;color:#e8bb85;margin-bottom:6px;font:15px Georgia,serif}
+.button-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.btn{background:#242735;color:#efe6de;border:1px solid #444757;border-radius:9px;padding:10px 12px;font-size:12px}.btn:hover{background:#303444}.btn.primary{background:#e9c28a;color:#211c20;border-color:#e9c28a;font-weight:750}
+.control{margin-bottom:16px}.control label{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:8px}.control output{color:#e3c18f;font-variant-numeric:tabular-nums}.control input{width:100%;accent-color:#dcab70}
+select{width:100%;padding:10px;color:var(--text);background:#242635;border:1px solid #4c4b5b;border-radius:9px}
+.note{background:#1c1d2b;border:1px solid #36394b;padding:12px;border-radius:10px;color:#c5bfca;font-size:12px;line-height:1.6}
+.info{padding:14px;border:1px solid #3a3a49;border-radius:12px;background:#1b1c29}.info .large-glyph{font:48px Georgia,serif;color:var(--gold);margin-bottom:10px}.info h2{margin-bottom:4px}.info p{font-size:12px;color:#c9c8d3;margin-top:8px}.equation{font:13px Georgia,serif;color:#ffddb0;overflow-wrap:anywhere;background:#10141e;border-radius:8px;padding:11px;margin-top:10px}
+.preset-label{display:block;margin:8px 0;font-size:12px}.mode-explain{font-size:12px;color:#b9bbc7;margin-top:10px}.status{font-size:11px;color:#b8c4c9;min-height:16px}
+footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11px;line-height:1.6}
+[hidden]{display:none!important}
+@media(max-width:1120px){.layout{grid-template-columns:245px minmax(350px,1fr)}aside:last-child{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;border-left:0;border-top:1px solid var(--line)}}
+@media(max-width:790px){header{padding:13px}.head-right .tag{display:none}.layout{display:flex;flex-direction:column}.workspace{order:0}.layout aside:first-child{order:1}.layout aside:last-child{order:2;display:block}.symbol{min-height:62px}.symbols{grid-template-columns:repeat(5,minmax(0,1fr))}.toolbar{padding:12px;flex-wrap:wrap}.stage-chain{padding:13px}.stage-buttons{grid-template-columns:repeat(3,minmax(0,1fr))}#crucible{height:52vh;min-height:340px}}
+@media(max-width:460px){.symbols{grid-template-columns:repeat(4,minmax(0,1fr))}.brand strong{font-size:19px}.head-right a{font-size:11px}.visual-label{left:12px;top:12px}.visual-label strong{font-size:18px}.visual-hint{left:12px;right:12px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <a href="./index.html" class="brand"><span class="mark" aria-hidden="true">Φ</span><span><strong>The Great Work Engine</strong><small>ΦMATH ATELIER · ALCHEMICAL ATLAS</small></span></a>
+  <div class="head-right"><span class="tag">3 PILLARS · 6 STAGES · 9 ARCHETYPES</span><a href="./index.html">← Return to Atelier</a></div>
+</header>
+<div class="layout">
+ <aside aria-label="Alchemical symbol atlas">
+   <section><span class="kicker">01 / The symbolic atlas</span><h2>Twenty symbols</h2><p class="lead">Choose an archetype or instrument to inspect its traditional associations and the equations we use to visualize it.</p>
+   <div class="symbols" id="symbolGrid" role="group" aria-label="Choose alchemical symbol"></div></section>
+   <section class="note"><strong>Study boundary</strong><div>Historical meanings vary across texts and eras. These are documented motifs and contemporary artistic interpretations, not supernatural, physical or medical claims.</div></section>
+ </aside>
+ <main class="workspace" aria-label="Live alchemical artwork">
+   <div class="toolbar"><div><span class="kicker">The crucible / form · motion · meaning</span><h1 id="workTitle">Prima Materia</h1></div>
+     <div class="tabs" role="group" aria-label="Studio mode">
+       <button class="tab" type="button" data-view="study" aria-pressed="true">Study</button>
+       <button class="tab" type="button" data-view="play" aria-pressed="false">Play</button>
+       <button class="tab" type="button" data-view="ritual" aria-pressed="false">Sequence</button>
+       <button class="tab" type="button" data-view="atlas" aria-pressed="false">Atlas</button>
+     </div>
+   </div>
+   <div class="visual">
+     <canvas id="crucible" role="img" aria-label="Decorative procedural mathematical visualization of the selected alchemical symbol"></canvas>
+     <div class="visual-label"><strong id="visualTitle">The Origin Field</strong><small id="visualSub">Prima Materia / Stage 1 of 6</small></div>
+     <div class="visual-hint"><span id="visualHint">Original procedural mathematics · offline</span><span id="seedText">SEED 369</span></div>
+   </div>
+   <section class="stage-chain" aria-label="Six stage transformation router"><span class="kicker">02 / Transformation operations</span><div id="stageButtons" class="stage-buttons"></div>
+     <div class="button-row">
+       <button class="btn" type="button" id="prevStage">← Previous</button>
+       <button class="btn primary" type="button" id="nextStage">Next operation →</button>
+       <button class="btn" type="button" id="pauseBtn" aria-pressed="false">Ⅱ Pause</button>
+       <button class="btn" type="button" id="randomBtn">↝ New seed</button>
+     </div>
+     <p class="mode-explain" id="modeExplain">Study: inspect a symbol, stage, and mathematical mapping.</p>
+   </section>
+   <footer>Φ369 · Symbolic mathematics and original generative art. No online services, tracking, or copied historical illustrations.</footer>
+ </main>
+ <aside aria-label="Process controls and interpretation">
+  <section><span class="kicker">03 / Hermetic notes</span><div class="info">
+    <div class="large-glyph" id="infoGlyph" aria-hidden="true">◎</div><h2 id="infoName">Prima Materia</h2>
+    <small id="infoFamily">Great Work</small><p id="infoMeaning">Hypothetical first matter.</p>
+    <p id="infoStage">Transformation stage: Origin</p>
+    <div class="equation" id="infoEquation">r(θ,t) = a + b sin(nθ + ωt)</div>
+    <p id="infoMath"></p>
+  </div></section>
+  <section><span class="kicker">04 / Parameters</span>
+    <div id="controls">
+      <div class="control"><label for="intensity">Intensity <output id="intensityOut">62%</output></label><input id="intensity" type="range" min="0" max="100" value="62"></div>
+      <div class="control"><label for="symmetry">Symmetry <output id="symmetryOut">6</output></label><input id="symmetry" type="range" min="3" max="12" value="6"></div>
+      <div class="control"><label for="recursion">Recursion <output id="recursionOut">5</output></label><input id="recursion" type="range" min="1" max="9" value="5"></div>
+      <div class="control"><label for="speed">Motion <output id="speedOut">45%</output></label><input id="speed" type="range" min="0" max="100" value="45"></div>
+      <div class="control"><label for="hue">Hue <output id="hueOut">34°</output></label><input id="hue" type="range" min="0" max="359" value="34"></div>
+      <label class="preset-label"><input id="acid" type="checkbox"> AcidWarp Chamber · amplified color cycling</label>
+    </div>
+  </section>
+  <section><span class="kicker">05 / Formulae vault</span>
+    <label for="presetSelect" class="preset-label">Choose a local preset</label>
+    <select id="presetSelect">
+      <option value="">Select a formula…</option>
+      <option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option>
+      <option value="ouro-loop">Ouro Loop</option><option value="stone-ascension">Stone Ascension</option>
+      <option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option>
+    </select>
+    <div class="button-row"><button type="button" class="btn" id="exportRecipe">↓ Export recipe</button>
+      <button type="button" class="btn" id="importRecipe">↑ Import recipe</button><button type="button" class="btn" id="resetBtn">↺ Reset</button></div>
+    <input type="file" id="recipeFile" accept=".json,application/json" hidden>
+    <p role="status" aria-live="polite" class="status" id="status"></p>
+  </section>
+  <section class="note"><strong>Local-first</strong><div>Settings stay in your browser. Recipe JSON is versioned and validated on import. No microphones, network connections, or external assets are required.</div></section>
+ </aside>
+</div>
+<script src="./alchemy-engine.js"></script>
+<script src="./alchemy-ui.js"></script>
+</body>
+</html>

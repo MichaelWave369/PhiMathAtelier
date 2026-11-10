@@ -2,7 +2,7 @@
 
 **A Living Equation Studio**, v1.0.0.
 
-A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, `performance-cues.js`, `performance-timeline.js`, and `scene-dissolve.js` must be present in the same folder.
+A self-contained, completely offline mathematical art engine using JavaScript, WebGL 1.0, GLSL fragment shaders, and an automatic Canvas2D fallback. No frameworks, third-party dependencies, textures, photos, online APIs, or build steps. `index.html`, `chromatic-warp.js`, `vj-lab.js`, `deck-mixer.js`, `geometry-lab.js`, `performance-cues.js`, `performance-timeline.js`, and `scene-dissolve.js` must be present in the same folder. The optional Alchemical Atlas is a separate offline studio at `alchemy.html`, using `alchemy-engine.js` and `alchemy-ui.js`.
 
 ## Launch
 
@@ -333,3 +333,25 @@ Pausing the timeline pauses the transition's clock. Manual fader/MIDI changes, m
 GitHub Actions includes `node tests/scene-dissolve.mjs` alongside all seven existing test suites, covering snapshot capture, WebGL texture flip/upload reuse, alpha-over output, CPU path, easing, pause/cancel and Pages deployment. Browser QA remains required for real hardware GPU behavior, accurate timing under throttling, mobile timeline layout, high-resolution PNG and recorded WebM.
 
 **Still future scope:** Two simultaneously live scene renderers, beat-grid sync, BackSpin96/ParaCut bridges, and multitrack video editing are *not* claimed here.
+
+
+## The Great Work Engine — Alchemical Atlas R1 (new)
+
+Open [The Great Work Engine](alchemy.html) from the main Atelier sidebar, or open `alchemy.html` directly. It is an **original procedural Canvas2D experience** that runs without an internet connection, build step, or dependency install; the existing WebGL worlds, Chromatic Warp, geometry lab, dual-deck mixer, cue bank, VJ LAB and exports remain unchanged.
+
+**PhiStream-style layers:**
+- **Engine:** deterministic seed, Canvas2D renderer, color field, animation clock, safe parameter normalization.
+- **Symbol registry:** 20 curated historical motifs, grouped into nine core archetypes and 11 metals/Great Work/instrument objects. Each has a stable ID, glyph, stage link, educational text and mathematical mapping.
+- **Transformations:** six routed operations, Prima Materia → Calcination → Dissolution → Sublimation → Coagulation → Transmutation. Each chooses a distinct procedural field. Cycle using Previous/Next, select a stage directly, or select a symbol to jump to its mapped stage.
+- **Interface / Atlas:** Study, Play, Sequence and Atlas exploration modes; five live controls (intensity, symmetry, recursion, speed, hue), opt-in AcidWarp Chamber, six curated Formulae.
+- **Local recipe vault:** browser-local remembered settings and version-1 JSON import/export. Import is limited to 32 KB; values, IDs, numbers and recipe version are validated. It does not import JavaScript.
+
+**3 / 6 / 9 architecture:** Form · Motion · Meaning; six operations; nine initial archetypes. These are design conventions, not scientific proofs or claimed universal laws.
+
+**Research boundary:** historical alchemical symbols have diverse uses, so the atlas's labels are deliberately concise, and their equations are **modern visual interpretations**, not claimed ancient mathematical formulas, chemical transmutation, medical effects or paranormal mechanisms. No copied emblem image is included. The current R1 renderer is a separate Canvas2D stage, not yet a source in the dual-deck compositor or an audio-reactive shader.
+
+**Keyboard and accessibility:** native keyboard-focusable buttons and range controls; the Six-stage Sequence supports left/right arrow keys when focus is outside controls. Reduced-motion users begin paused unless they have an existing local save. The artwork is decorative and has descriptive text beside it.
+
+**Test:** run `node tests/alchemy.mjs`. It checks the schema, 20 registry entries, six transitions, nine archetypes, presets, renderer paths, navigation link, and recipe safeguards. The GitHub Actions smoke workflow runs this alongside the original suite.
+
+**Future rungs:** optional integration with existing dual-deck and VJ LAB engines, a richer graph of symbol relationships, educational citations for historical associations, export from the alchemical canvas, and controlled shader parity. None are claimed in R1.
