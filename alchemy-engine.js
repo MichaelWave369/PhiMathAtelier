@@ -85,13 +85,29 @@
     let v=(seed|0)||369;
     return function () {v^=v<<13;v^=v>>>17;v^=v<<5;return (v>>>0)/4294967296;};
   }
-  function draw(ctx,canvas,input,seconds) {
-    const s=normalize(input),stage=stages.find(x=>x.id===s.stage);
+  // Read-only VJ LAB adapter. The stored recipe is never modified by audio input.
+  function clampBand(value){
+    const n=Number(value);
+    return Number.isFinite(n)?Math.max(0,Math.min(1,n)):0;
+  }
+  function modulate(input,bands,wet=.75){
+    const s=normalize(input),depth=clampBand(wet);
+    if(!bands||depth===0)return s;
+    const bass=clampBand(bands.bass),mid=clampBand(bands.mid),
+          high=clampBand(bands.high),beat=clampBand(bands.beat);
+    return {...s,
+      intensity:number(s.intensity+depth*(20*bass+18*beat),0,100,s.intensity),
+      speed:number(s.speed+depth*28*mid,0,100,s.speed),
+      hue:(s.hue+Math.round(depth*42*high))%360};
+  }
+  function draw(ctx,canvas,input,seconds,bands=null) {
+    const s=modulate(input,bands),stage=stages.find(x=>x.id===s.stage);
     const w=canvas.width,h=canvas.height;
     if(!w||!h) return;
     const min=Math.min(w,h),cX=w/2,cY=h/2,t=seconds*Math.max(.12,s.speed/45);
     const hue=(s.hue+(s.acid?seconds*22:0))%360,amp=s.intensity/100,rec=s.recursion,n=s.symmetry;
-    const vivid=s.acid?94:78,light=s.acid?68:66;
+    const vivid=s.acid?94:78,
+          light=Math.min(90,(s.acid?68:66)+16*clampBand(bands?.beat));
     function color(offset=0,opacity=1,brightness=light) {
       return 'hsla('+((hue+offset+360)%360)+','+vivid+'%,'+brightness+'%,'+opacity+')';
     }
@@ -186,6 +202,10 @@
     // Use HTML for semantic detail; this canvas is intentionally decorative.
     return stage.id;
   }
+  function renderTo(ctx,canvas,input,seconds=0,bands=null) {
+    if(!ctx||!canvas||!(canvas.width>0&&canvas.height>0))return false;
+    return typeof draw(ctx,canvas,input,seconds,bands)==='string';
+  }
   function create(options) {
     const canvas=options&&options.canvas;
     if(!canvas||typeof canvas.getContext!=='function')throw Error('A canvas is required');
@@ -218,5 +238,6 @@
       redraw:()=>{resize();draw(ctx,canvas,state,clock);},destroy:()=>{active=false;},
       exportRecipe:()=>({app:'PhiMath Alchemy',...state})};
   }
-  root.PhiAlchemy=Object.freeze({VERSION,stages,symbols,archetypes,defaults,normalize,nextStage,generatePreset,draw,create});
+  root.PhiAlchemy=Object.freeze({VERSION,stages,symbols,archetypes,defaults,normalize,
+    nextStage,generatePreset,modulate,draw,renderTo,create});
 })(typeof window!=='undefined'?window:globalThis);
