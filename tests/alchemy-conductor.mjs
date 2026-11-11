@@ -100,7 +100,7 @@ for(const token of ['src="./alchemy-conductor.js"','src="./alchemy-conductor-ui.
  'id="condSource"','id="condSteps"','id="condStart"','id="condDemo"','id="condSave"','id="condImport"'])
  assert.ok(html.includes(token),'missing score editor element: '+token);
 for(const token of ['condSource','condSave','condExport','condImport','condFile','condTap',
- "phimath-conductor-library-r1",'slot-3','api.normalizeScore'])
+ "phimath-conductor-library-r1",'slotId(value)','api.normalizeScore'])
  assert.ok(ui.includes(token),'missing UI integration: '+token);
 for(const path of ['alchemy-conductor.js','alchemy-conductor-ui.js'])
  assert.ok(pages.includes('cp '+path+' site/'+path),'missing Pages asset '+path);
