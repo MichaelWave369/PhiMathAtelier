@@ -26,6 +26,8 @@ jobs:
           cp alchemy.html site/alchemy.html
           cp alchemy-engine.js site/alchemy-engine.js
           cp alchemy-sequence.js site/alchemy-sequence.js
+          cp alchemy-conductor.js site/alchemy-conductor.js
+          cp alchemy-conductor-ui.js site/alchemy-conductor-ui.js
           cp alchemy-ui.js site/alchemy-ui.js
           cp chromatic-warp.js site/chromatic-warp.js
           cp vj-lab.js site/vj-lab.js
@@ -35,7 +37,7 @@ jobs:
           cp performance-timeline.js site/performance-timeline.js
           cp scene-dissolve.js site/scene-dissolve.js
           # Fail deployment before upload if any linked alchemical asset is missing.
-          for file in alchemy.html alchemy-engine.js alchemy-sequence.js alchemy-ui.js; do
+          for file in alchemy.html alchemy-engine.js alchemy-sequence.js alchemy-conductor.js alchemy-conductor-ui.js alchemy-ui.js; do
             test -s "site/$file" || { echo "Missing Pages artifact: $file"; exit 1; }
           done
           touch site/.nojekyll

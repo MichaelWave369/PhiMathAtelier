@@ -16,6 +16,7 @@
  }
  // A reload does not automatically begin playback; the user starts it deliberately.
  let sequence={...restoreSequence(),enabled:false},sequenceElapsed=0,sequenceStartStage='prima',sequenceTicks=0;
+ let conductor=null;
  function persistSequence(){
    try{localStorage.setItem(sequenceKey,JSON.stringify(sequence));}catch(_){}
  }
@@ -113,6 +114,7 @@
  const studio=api.create({
    canvas:$('crucible'),state:restore(),onChange:renderState,
    onTick:dt=>{
+     if(conductor?.active){conductor.tick(dt);return;}
      if(!sequence.enabled)return;
      sequenceElapsed+=dt;
      const frame=seqAPI.frame(sequenceElapsed,sequence,sequenceStartStage);
@@ -126,30 +128,33 @@
      if(++sequenceTicks%6===0)showSequence(frame);
    },
    renderFrame:(ctx,canvas,state,clock)=>{
-     if(sequence.enabled)sequenceRenderer.renderTo(ctx,canvas,state,sequenceElapsed,sequence,null,sequenceStartStage);
+     if(conductor?.active)conductor.draw(ctx,canvas,state,clock);
+     else if(sequence.enabled)sequenceRenderer.renderTo(ctx,canvas,state,sequenceElapsed,sequence,null,sequenceStartStage);
      else api.draw(ctx,canvas,state,clock);
    }
  });
  sequenceStartStage=studio.getState().stage;showSequence();
+ conductor=window.PhiAlchemyConductorUI.create({studio,stopSequence,announce});
  grid.addEventListener('click',event=>{
    const button=event.target.closest('button[data-symbol]');
-   if(button){studio.setSymbol(button.dataset.symbol);retargetSequence();}
+   if(button){conductor?.stop();studio.setSymbol(button.dataset.symbol);retargetSequence();}
  });
  stages.addEventListener('click',event=>{
    const button=event.target.closest('button[data-stage]');
-   if(button){studio.setStage(button.dataset.stage);retargetSequence();}
+   if(button){conductor?.stop();studio.setStage(button.dataset.stage);retargetSequence();}
  });
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
-   if(b.dataset.view!=='ritual')stopSequence();
+   if(b.dataset.view!=='ritual'){stopSequence();conductor?.stop();}
    studio.setState({mode:b.dataset.view});
    if(b.dataset.view==='atlas')grid.scrollIntoView({behavior:'auto',block:'nearest'});
  }));
  controls.forEach(key=>$(key).addEventListener('input',e=>studio.setState({[key]:Number(e.target.value)})));
  $('acid').addEventListener('change',e=>studio.setState({acid:e.target.checked}));
- $('nextStage').addEventListener('click',()=>{studio.advance(1);retargetSequence();});
- $('prevStage').addEventListener('click',()=>{studio.advance(-1);retargetSequence();});
+ $('nextStage').addEventListener('click',()=>{conductor?.stop();conductor?.stop();studio.advance(1);retargetSequence();});
+ $('prevStage').addEventListener('click',()=>{conductor?.stop();conductor?.stop();studio.advance(-1);retargetSequence();});
  $('pauseBtn').addEventListener('click',()=>studio.setState({paused:!studio.getState().paused}));
  $('seqEnabled').addEventListener('change',e=>{
+   if(e.target.checked)conductor?.stop();
    sequence={...sequence,enabled:e.target.checked};
    sequenceElapsed=0;sequenceStartStage=studio.getState().stage;
    if(sequence.enabled)studio.setState({mode:'ritual',paused:false});
@@ -174,10 +179,10 @@
  $('randomBtn').addEventListener('click',()=>{studio.randomize();announce('A new mathematical seed has been generated');});
  $('presetSelect').addEventListener('change',e=>{
    const preset=api.generatePreset(e.target.value);
-   if(preset){stopSequence();studio.setState(preset);retargetSequence();announce('Loaded formula: '+e.target.options[e.target.selectedIndex].text);}
+   if(preset){conductor?.stop();stopSequence();studio.setState(preset);retargetSequence();announce('Loaded formula: '+e.target.options[e.target.selectedIndex].text);}
  });
  $('resetBtn').addEventListener('click',()=>{
-   sequence=seqAPI.normalize();sequenceElapsed=0;persistSequence();
+   conductor?.stop();sequence=seqAPI.normalize();sequenceElapsed=0;persistSequence();
    studio.setState(api.defaults);retargetSequence();
    $('presetSelect').value='';announce('Great Work parameters restored');
  });
@@ -196,7 +201,7 @@
      if(file.size>32768)throw Error('File exceeds the 32 KB recipe limit');
      const data=JSON.parse(await file.text());
      if(data.app!=='PhiMath Alchemy')throw Error('Not a Great Work recipe');
-     stopSequence();
+     conductor?.stop();stopSequence();
      studio.setState(api.normalize(data));
      sequence={...seqAPI.normalize(data.sequence),enabled:false};
      persistSequence();retargetSequence();

@@ -293,6 +293,7 @@ void main(){
 <script src="geometry-lab.js"></script>
 <script src="alchemy-engine.js"></script>
 <script src="alchemy-sequence.js"></script>
+<script src="alchemy-conductor.js"></script>
 <script src="performance-cues.js"></script>
 <script src="performance-timeline.js"></script>
 <script src="scene-dissolve.js"></script>
@@ -311,7 +312,21 @@ void main(){
  ];
  const canvas=$('art'), stage=$('stage');
  const greatWorkRenderer=window.PhiAlchemySequence.createRenderer(window.PhiAlchemy,document);
- let greatWorkTime=0;
+ const conductorAPI=window.PhiAlchemyConductor;
+ const conductorRenderer=conductorAPI.createRenderer(window.PhiAlchemy,document);
+ let greatWorkTime=0,conductorTransport=null,conductorKey='';
+ function conductorScore(key){
+  if(/^slot-[0-3]$/.test(key)){
+   try{
+    const raw=localStorage.getItem('phimath-conductor-library-r1');
+    if(raw&&raw.length<=64000){
+     const slots=JSON.parse(raw),slot=slots?.[Number(key.slice(5))];
+     if(slot)return conductorAPI.normalizeScore(slot);
+    }
+   }catch(_){/* Fall back when a slot is absent, corrupt or unavailable. */}
+  }
+  return conductorAPI.preset(key)||conductorAPI.preset('sixfold');
+ }
  const mixer=window.PhiDeckMixer.create({
   root:$('deckMixer'),getA:()=>state,
   renderGeometry:(deck,context,targetCanvas)=>{
@@ -326,6 +341,15 @@ void main(){
    renderAlchemy:(deck,context,targetCanvas)=>{
     const lab=window.PhiAlchemy;
     if(!lab?.renderTo)return false;
+    if(deck.alchemyPreset==='conductor'){
+     const key=deck.conductorScore||'sixfold';
+     if(!conductorTransport||conductorKey!==key){
+      conductorTransport=conductorAPI.createTransport(conductorScore(key));conductorKey=key;
+     }
+     const base=lab.normalize({...lab.defaults,seed:deck.seed});
+     return conductorRenderer.renderTo(context,targetCanvas,base,
+       conductorTransport.snapshot(),playingTime,vj.levels);
+    }
     if(deck.alchemyPreset==='sequence'){
      const base=lab.normalize({...lab.defaults,seed:deck.seed});
      const result=greatWorkRenderer.renderTo(context,targetCanvas,base,greatWorkTime,
@@ -624,6 +648,16 @@ void main(){
     if(autoElapsed>=20){state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();}
    }
   vj.update(delta);
+  // Beat edge detection consumes the already-smoothed VJ LAB levels.
+  // No duplicate audio capture; transport pauses with the master scene.
+  const liveDeck=mixer.deckB;
+  if(mixer.enabled&&liveDeck.mode===6&&liveDeck.alchemyPreset==='conductor'){
+   if(!conductorTransport||conductorKey!==liveDeck.conductorScore){
+    conductorTransport=conductorAPI.createTransport(conductorScore(liveDeck.conductorScore));
+    conductorKey=liveDeck.conductorScore;
+   }
+   if(!state.paused)conductorTransport.tick(delta,vj.levels);
+  }else{conductorTransport=null;conductorKey='';}
   cues.tick(delta);
   timeline.tick(delta);
   sceneFX.tick(delta,timeline.paused);

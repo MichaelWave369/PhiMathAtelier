@@ -28,3 +28,4 @@ jobs:
           node tests/alchemy.mjs
           node tests/alchemy-deck.mjs
           node tests/alchemy-sequence.mjs
+          node tests/alchemy-conductor.mjs
