@@ -19,7 +19,7 @@ const good=mixer.cleanDeck({mode:2,palette:1,seed:42,zoom:90});
 assert.equal(good.mode,2);assert.equal(good.palette,1);
 assert.equal(good.seed,42);assert.equal(good.zoom,90);
 const bounded=mixer.cleanDeck({mode:99,palette:-6,seed:Infinity,density:-100,zoom:900,warp:900});
-assert.equal(bounded.mode,5);assert.equal(bounded.palette,0);
+assert.equal(bounded.mode,6);assert.equal(bounded.palette,0);
 assert.equal(bounded.density,15);assert.equal(bounded.zoom,220);
 assert.equal(bounded.warp,200);assert.equal(bounded.seed,0);
 const invalid=mixer.cleanDeck({acidCycle:'no',pointer:1});
@@ -28,6 +28,8 @@ assert.equal(invalid.pointer,true);
 const geometry=mixer.cleanDeck({mode:5,geometryPreset:'mandala'});
 assert.equal(geometry.mode,5);assert.equal(geometry.geometryPreset,'mandala');
 assert.equal(mixer.cleanDeck({mode:5,geometryPreset:'<script>'}).geometryPreset,'flower');
+assert.equal(mixer.cleanDeck({mode:6,alchemyPreset:'ouro-loop'}).alchemyPreset,'ouro-loop');
+assert.equal(mixer.cleanDeck({mode:6,alchemyPreset:'<script>'}).alchemyPreset,'stone-ascension');
 assert.equal(mixer.cleanDeck({mode:1}).mode,1);
 
 const fallback=mixer.cleanMix(undefined);
