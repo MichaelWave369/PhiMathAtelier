@@ -8,7 +8,7 @@ const html=load('alchemy.html');
 const ui=load('alchemy-ui.js');
 const index=load('index.html');
 const pagesWorkflow=load('.github/workflows/pages.yml');
-for(const path of ['alchemy.html','alchemy-engine.js','alchemy-sequence.js','alchemy-ui.js']) {
+for(const path of ['alchemy.html','alchemy-engine.js','alchemy-sequence.js','alchemy-conductor.js','alchemy-conductor-ui.js','alchemy-ui.js']) {
   assert.ok(pagesWorkflow.includes('cp '+path+' site/'+path),
     'GitHub Pages workflow must include '+path);
 }
