@@ -27,3 +27,4 @@ jobs:
           node tests/scene-dissolve.mjs
           node tests/alchemy.mjs
           node tests/alchemy-deck.mjs
+          node tests/alchemy-sequence.mjs
