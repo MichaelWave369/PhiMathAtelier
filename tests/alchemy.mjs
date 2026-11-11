@@ -8,7 +8,7 @@ const html=load('alchemy.html');
 const ui=load('alchemy-ui.js');
 const index=load('index.html');
 const pagesWorkflow=load('.github/workflows/pages.yml');
-for(const path of ['alchemy.html','alchemy-engine.js','alchemy-ui.js']) {
+for(const path of ['alchemy.html','alchemy-engine.js','alchemy-sequence.js','alchemy-ui.js']) {
   assert.ok(pagesWorkflow.includes('cp '+path+' site/'+path),
     'GitHub Pages workflow must include '+path);
 }
@@ -19,6 +19,10 @@ new vm.Script(ui,{filename:'alchemy-ui.js'});
 assert.match(html,/id="crucible"/);
 assert.match(html,/src="\.\/alchemy-engine\.js"/);
 assert.match(html,/src="\.\/alchemy-ui\.js"/);
+assert.match(html,/src="\.\/alchemy-sequence\.js"/);
+assert.match(html,/id="seqEnabled"/);
+assert.match(html,/id="seqProgress"/);
+assert.match(html,/id="seqRestart"/);
 assert.match(index,/href="alchemy\.html"/);
 assert.match(html,/Great Work Engine/);
 const sandbox={window:{devicePixelRatio:1,requestAnimationFrame:()=>{}}};
