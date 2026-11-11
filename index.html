@@ -291,6 +291,7 @@ void main(){
 <script src="vj-lab.js"></script>
 <script src="deck-mixer.js"></script>
 <script src="geometry-lab.js"></script>
+<script src="alchemy-engine.js"></script>
 <script src="performance-cues.js"></script>
 <script src="performance-timeline.js"></script>
 <script src="scene-dissolve.js"></script>
@@ -318,7 +319,24 @@ void main(){
     {layers:lab.preset(chosen),selected:0,motion:24,background:'ink',audio:{enabled:true,wet:.85}};
    return lab.renderTo(context,targetCanvas,recipe,playingTime,vj.levels);
   },
-  onSwap:next=>{const old={...state};Object.assign(state,next);updateUI();return old;},
+  // Reuse the geometry Canvas2D texture path for Alchemy's Deck B source.
+   renderAlchemy:(deck,context,targetCanvas)=>{
+    const lab=window.PhiAlchemy;
+    if(!lab?.renderTo)return false;
+    let formula=lab.generatePreset(deck.alchemyPreset);
+    if(deck.alchemyPreset==='saved'){
+     formula=lab.generatePreset('stone-ascension');
+     try{
+      const raw=localStorage.getItem('phimath-alchemy-r1');
+      if(raw&&raw.length<=32768){
+       const parsed=JSON.parse(raw);
+       if(parsed?.app==='PhiMath Alchemy')formula=lab.normalize(parsed);
+      }
+     }catch(_){/* Invalid or unavailable local recipes fall back safely. */}
+    }
+    return lab.renderTo(context,targetCanvas,formula,playingTime,vj.levels);
+   },
+   onSwap:next=>{const old={...state};Object.assign(state,next);updateUI();return old;},
   onChange:()=>{if(gl||ctx2d)draw();}
  });
  const vj=window.PhiVJLab.create({root:$('vjLab'),stage,canvas,onCrossfade:v=>mixer.setCrossfade(v)});
