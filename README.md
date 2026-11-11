@@ -399,3 +399,28 @@ The main [ΦMath Atelier mixer](index.html) now exposes **Deck B → Alchemical 
 **Cue Bank / Timeline integration:** the mixer now retains the validated `conductorScore` identifier in Deck B snapshots. Recalling a cue with a Conductor world reselects its score; the active score remains browser-local, so export the score separately for use on another device. Old presets, shaders, Sacred Geometry, and R3 time sequencer are unchanged. The Conductor itself stores no audio data or recorded sound, and requires no new backend or network connection.
 
 **R4 checks:** `node tests/alchemy-conductor.mjs` exercises input validation, rising-edge detection (no double counting while the pulse is held), loop/no-loop, scored transitions, buffer compositing, old mixer recipes and Pages publication. The smoke workflow runs this test along with all previous integration tests. Real-browser QA is still required for end-to-end VJ pulse interaction, MIDI/Cue Bank and visual smoothness.
+
+
+## FoldMesh Lab 01 · Memory in the Crease
+
+Open [FoldMesh Lab](foldmesh.html) from the Atelier's left navigation. The lab is fully static/offline and uses only Canvas 2D and built-in browser APIs. It does **not** implement NVIDIA DLSS, optical holography, encryption, or infinite physical storage. The idea is inspired by sparse representation and viewpoint-dependent reconstruction, using an independent deterministic implementation.
+
+### Model
+
+- Two six-face hinged cubes, A and B, whose projected faces can be unfolded into an adjacent planar cube net and orbited interactively.
+- Face-local addresses use `face/quad/quad/...`, where faces are `front`, `back`, `left`, `right`, `top`, `bottom` and quadrants are `0=upper-left`, `1=upper-right`, `2=lower-left`, `3=lower-right`. Depth is capped at 4 address steps. The renderer caps displayed subdivisions at 3 steps.
+- Each occupied fold owns a UTF-8 payload of up to 512 bytes, revision, FNV-1a checksum, phase (0–7) and orientation (0–3). Storage is sparse and bounded at 1,024 folds per cube; visual nesting creates no additional storage capacity.
+- A gear transfer is accepted only if the source checksum is intact, phase and orientation match, permission is enabled, and the destination is empty or overwrite was explicitly enabled. Destination bytes are copied, not aliased, and verified after the copy.
+- The **Altermath demo** writes distinct data into two outwardly identical geometric shells. A probe with the proper lock demonstrates unequal observable outputs despite equal visible projections. This is a computational demonstration, not a claim of new physics.
+- Export/import records both cubes and their payloads; import validates addresses, payload bounds, and checksums. FNV-1a is only an accidental-corruption check, not a security primitive.
+
+### Quick experiment
+
+1. Open **Memory in the Crease**; drag the stage to orbit or change the presentation from closed cube to flat net.
+2. Change the payload and choose **Write fold A**.
+3. Match the phase and orientation, keep gear permission enabled, and choose **Engage gear A → B**.
+4. Choose **Verify B** to confirm the transfer's checksum.
+5. Choose **Altermath demo** to install different hidden payloads in the same-looking cubes. Compare the observations, then enable destination overwrite to deliberately transfer new content.
+6. Export the recipe and import it to reproduce the same stored information.
+
+Run `node tests/foldmesh.mjs` for deterministic model and wiring checks. The GitHub Actions smoke workflow also runs this test on pull requests.
