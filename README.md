@@ -355,3 +355,18 @@ Open [The Great Work Engine](alchemy.html) from the main Atelier sidebar, or ope
 **Test:** run `node tests/alchemy.mjs`. It checks the schema, 20 registry entries, six transitions, nine archetypes, presets, renderer paths, navigation link, and recipe safeguards. The GitHub Actions smoke workflow runs this alongside the original suite.
 
 **Future rungs:** optional integration with existing dual-deck and VJ LAB engines, a richer graph of symbol relationships, educational citations for historical associations, export from the alchemical canvas, and controlled shader parity. None are claimed in R1.
+
+
+## Great Work Engine — R2: VJ LAB / dual-deck integration
+
+The original [Alchemical Atlas](alchemy.html) remains a separate offline study workbench. It is now also a **live Deck B source** in the main [Atelier](index.html), connected through the existing Canvas2D-to-WebGL texture compositor. No second sound engine is introduced.
+
+1. In the main Atelier, scroll to **Dual-Deck Visual Mixer** and enable A/B mixing.
+2. Choose **Alchemical Atlas** as Deck B's World, then choose a Formula (Mercury Bloom, Salt Matrix, Ouro Loop, Stone Ascension, Rebis Merge, Prima Chaos).
+3. Crossfade from a normal shader world on Deck A to your formula on Deck B using Blend, Wipe, Iris, or the existing MIDI crossfader.
+4. Start the VJ LAB demo beat, manual bands, microphone or a local music file. The **same on-device FFT levels** drive Alchemy: bass increases deformation, mids accelerate motion, highs shift hue, and beats briefly brighten it. Input permissions are still managed only in VJ LAB.
+5. To reuse your current Alchemical Atlas configuration, save it in `alchemy.html` (automatic browser-local storage) and choose **My saved Alchemical Atlas composition**. It is read from same-origin `localStorage`; a missing or invalid value safely falls back to Stone Ascension.
+
+**Compatibility:** Deck A remains one of the five original shader modes. Vector-based Sacred Geometry (mode 5) and Alchemical Atlas (mode 6) are Deck B-only, so Swap A ↔ B is disabled while either is selected. Existing saved recipes without `alchemyPreset` retain their old modes. New mixer recipes include the validated formula ID, and all rendering stays local. The main PNG/WebM outputs use the existing composite stage, including Alchemy when it is on Deck B.
+
+**Validation:** `node tests/alchemy-deck.mjs` tests the pure audio adapter and CPU/GPU composition paths; the existing CI workflow also tests the original worlds, geometry, mixer and Alchemy. No new runtime dependencies. Manual browser checks remain appropriate, especially GPU texture orientation, mixed-frame exports, audio permission flow and mobile performance.

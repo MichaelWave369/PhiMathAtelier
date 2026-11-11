@@ -26,3 +26,4 @@ jobs:
           node tests/performance-timeline.mjs
           node tests/scene-dissolve.mjs
           node tests/alchemy.mjs
+          node tests/alchemy-deck.mjs
