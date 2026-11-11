@@ -35,6 +35,16 @@ h1,h2,h3,p{margin:0}h1{font:30px Georgia,serif}h2{font:21px Georgia,serif;margin
 select{width:100%;padding:10px;color:var(--text);background:#242635;border:1px solid #4c4b5b;border-radius:9px}
 .note{background:#1c1d2b;border:1px solid #36394b;padding:12px;border-radius:10px;color:#c5bfca;font-size:12px;line-height:1.6}
 .info{padding:14px;border:1px solid #3a3a49;border-radius:12px;background:#1b1c29}.info .large-glyph{font:48px Georgia,serif;color:var(--gold);margin-bottom:10px}.info h2{margin-bottom:4px}.info p{font-size:12px;color:#c9c8d3;margin-top:8px}.equation{font:13px Georgia,serif;color:#ffddb0;overflow-wrap:anywhere;background:#10141e;border-radius:8px;padding:11px;margin-top:10px}
+.sequence-controls{background:#171b29;border:1px solid #494052;border-radius:12px;padding:12px 14px;margin-top:14px}
+.sequence-controls h3{font:18px Georgia,serif;margin:0 0 7px;color:#e8c28e}
+.sequence-controls label{font-size:12px;color:#ddd5df;display:flex;align-items:center;gap:8px;margin:9px 0}
+.sequence-controls label input[type=checkbox]{accent-color:#e8bc80}
+.sequence-controls .sequence-sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sequence-controls .sequence-sliders label{display:block;margin:0}
+.sequence-controls input[type=range]{width:100%;accent-color:#e8bc80}
+.sequence-controls output{color:#efc990;font-variant-numeric:tabular-nums}
+.sequence-controls progress{width:100%;height:9px;accent-color:#e6b977}
+.sequence-controls .sequence-status{font-size:11px;color:#b8bdcf;min-height:20px;margin-top:6px}
 .preset-label{display:block;margin:8px 0;font-size:12px}.mode-explain{font-size:12px;color:#b9bbc7;margin-top:10px}.status{font-size:11px;color:#b8c4c9;min-height:16px}
 footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11px;line-height:1.6}
 [hidden]{display:none!important}
@@ -76,6 +86,18 @@ footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11
        <button class="btn" type="button" id="pauseBtn" aria-pressed="false">Ⅱ Pause</button>
        <button class="btn" type="button" id="randomBtn">↝ New seed</button>
      </div>
+     <div class="sequence-controls" id="sequenceControls" aria-label="Great Work timed sequence">
+       <h3>◈ Great Work Sequencer</h3>
+       <label for="seqEnabled"><input id="seqEnabled" type="checkbox"> Auto-play all six operations</label>
+       <div class="sequence-sliders">
+         <label for="seqHold">Hold each stage · <output id="seqHoldOut">7s</output><input id="seqHold" type="range" min="2" max="30" step="1" value="7"></label>
+         <label for="seqFade">Crossfade · <output id="seqFadeOut">1.5s</output><input id="seqFade" type="range" min=".2" max="4" step=".1" value="1.5"></label>
+       </div>
+       <label for="seqLoop"><input id="seqLoop" type="checkbox" checked> Loop the Great Work</label>
+       <progress id="seqProgress" value="0" max="100" aria-label="Current stage progress"></progress>
+       <div class="sequence-status" id="seqStatus" role="status" aria-live="off">Manual stage selection. Autoplay is off.</div>
+       <button class="btn" type="button" id="seqRestart">↺ Restart from Prima Materia</button>
+     </div>
      <p class="mode-explain" id="modeExplain">Study: inspect a symbol, stage, and mathematical mapping.</p>
    </section>
    <footer>Φ369 · Symbolic mathematics and original generative art. No online services, tracking, or copied historical illustrations.</footer>
@@ -115,6 +137,7 @@ footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11
  </aside>
 </div>
 <script src="./alchemy-engine.js"></script>
+<script src="./alchemy-sequence.js"></script>
 <script src="./alchemy-ui.js"></script>
 </body>
 </html>
