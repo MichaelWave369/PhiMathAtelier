@@ -10,7 +10,7 @@ assert.match(html, /<canvas\s+id="art"/);
 assert.match(html, /<\/html>/i);
 
 const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-assert.equal(scripts.length,11,'two GLSL shaders, eight external modules and a controller expected');
+assert.equal(scripts.length,12,'two GLSL shaders, nine external modules and a controller expected');
 const controller=scripts.filter(m=>!/x-shader/.test(m[1])&&!/src=/.test(m[1]));
 assert.equal(controller.length,1,'one application controller expected');
 new vm.Script(controller[0][2],{filename:'atelier-inline.js'});
@@ -78,6 +78,7 @@ assert.ok(html.includes('src="deck-mixer.js"'),'Missing dual-deck mixer loader')
 assert.ok(html.includes('id="vjLab"'),'Missing VJ LAB mount point');
 assert.ok(html.includes('src="geometry-lab.js"'),'Missing geometry lab loader');
 assert.ok(html.includes('src="alchemy-engine.js"'),'Missing Alchemy deck engine loader');
+assert.ok(html.includes('src="alchemy-sequence.js"'),'Missing Great Work sequencer loader');
 assert.ok(html.includes('id="geometryLab"'),'Missing geometry lab mount');
 assert.ok(html.includes('id="geometryCanvas"'),'Missing geometry canvas');
 assert.ok(html.includes('src="performance-cues.js"'),'Missing cue bank module');
