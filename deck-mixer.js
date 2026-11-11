@@ -4,16 +4,18 @@
 (function(global){
 'use strict';
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,Number.isFinite(Number(v))?Number(v):a));
-const limits={mode:[0,5],palette:[0,5],seed:[0,999999],density:[15,100],
+const limits={mode:[0,6],palette:[0,5],seed:[0,999999],density:[15,100],
  spiral:[20,300],warp:[0,200],glow:[25,250],zoom:[50,220],
  acidPattern:[0,5],acidBands:[4,48]};
 const fallback={mode:4,palette:5,seed:369,density:72,spiral:140,warp:65,
- glow:120,zoom:100,acidPattern:0,acidBands:16,acidCycle:true,pointer:true,geometryPreset:'flower'};
+ glow:120,zoom:100,acidPattern:0,acidBands:16,acidCycle:true,pointer:true,geometryPreset:'flower',alchemyPreset:'stone-ascension'};
 function cleanDeck(obj,base=fallback){
  const result={};
  for(const [k,[lo,hi]] of Object.entries(limits))result[k]=Math.round(clamp(obj?.[k]??base[k],lo,hi));
  for(const k of ['acidCycle','pointer'])result[k]=typeof obj?.[k]==='boolean'?obj[k]:Boolean(base[k]);
  result.geometryPreset=['live','metatron','flower','stars','mandala','phi'].includes(obj?.geometryPreset)?obj.geometryPreset:(base.geometryPreset||'flower');
+  result.alchemyPreset=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','saved'].includes(obj?.alchemyPreset)
+    ?obj.alchemyPreset:(base.alchemyPreset||'stone-ascension');
  return result;
 }
 function cleanMix(raw){return {enabled:raw?.enabled===true,crossfade:Math.round(clamp(raw?.crossfade??0,0,100)),
@@ -56,13 +58,13 @@ const css=[
  '.deck-mixer .dm-deck{border-top:1px solid #554767;margin-top:12px;padding-top:11px}',
  '.deck-mixer input[type=checkbox]{accent-color:#f0c28e}'
 ].join('\n');
-function create({root,getA,onChange,onSwap,renderGeometry}){
+function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
  if(!root||typeof getA!=='function')throw Error('Deck mixer requires root and getA');
  const st=document.createElement('style');st.textContent=css;document.head.append(st);
  let deckB=cleanDeck({}),mix=cleanMix({}),interactionRevision=0;
  root.innerHTML=[
   '<h2>⊞ Dual-Deck Visual Mixer</h2>',
-  '<p class="dm-muted">Blend a shader world on Deck A into any mathematical world or Sacred Geometry on Deck B. Both respond to the existing VJ LAB.</p>',
+  '<p class="dm-muted">Blend a shader world on Deck A into a mathematical world, Sacred Geometry, or Alchemical Atlas on Deck B. Both respond to the existing VJ LAB.</p>',
   '<label class="dm-row">Enable A/B deck mixing <input id="dmEnabled" type="checkbox"></label>',
   '<div class="dm-details" id="dmDetails" hidden>',
   '<div class="dm-hint"><b>DECK A</b><b>DECK B</b></div>',
@@ -71,7 +73,7 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   '<label class="dm-row">Transition <select id="dmStyle"><option value="blend">Smooth blend</option><option value="wipe">Left-to-right wipe</option><option value="iris">Expanding iris</option></select></label>',
   '<div class="dm-deck"><div class="dm-hint"><b>DECK B / EQUATION</b><span>Independent artwork</span></div>',
   '<div class="dm-grid" id="dmShaderControls">',
-  '<label>World<select id="dmMode"><option value="0">Galaxy Cluster</option><option value="1">Nested Foam</option><option value="2">Resonance Field</option><option value="3">Golden Bloom</option><option value="4">Chromatic Warp</option><option value="5">Sacred Geometry Lab</option></select></label>',
+  '<label>World<select id="dmMode"><option value="0">Galaxy Cluster</option><option value="1">Nested Foam</option><option value="2">Resonance Field</option><option value="3">Golden Bloom</option><option value="4">Chromatic Warp</option><option value="5">Sacred Geometry Lab</option><option value="6">Alchemical Atlas</option></select></label>',
   '<label>Palette<select id="dmPalette"><option value="0">Astral Rose</option><option value="1">Ion Blue</option><option value="2">Bioluminescent</option><option value="3">Solar Flare</option><option value="4">Silver Ghost</option><option value="5">VGA Spectrum</option></select></label>',
   '<label>Seed<input id="dmSeed" type="number" min="0" max="999999" step="1"></label>',
   '<label>Warp pattern<select id="dmPattern"><option value="0">Liquid Rings</option><option value="1">Solar Spokes</option><option value="2">Twin Wells</option><option value="3">Woven Grid</option><option value="4">Liquid Moiré</option><option value="5">Kaleido Flower</option></select></label>',
@@ -84,7 +86,12 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   '<button id="dmEditGeometry" type="button" style="width:100%;margin-top:9px">✎ Open Geometry Lab editor</button>',
   '<p class="dm-muted">Preset geometries respond to VJ LAB automatically. My Geometry Lab uses your saved layer and audio-response settings. Return from its editor to watch the crossfade.</p>',
   '</div>',
-  '<div class="dm-actions"><button id="dmClone" type="button">Copy A → B</button><button id="dmRandom" type="button">Random B</button><button id="dmSwap" type="button">Swap A ↔ B</button></div>',
+  '<div id="dmAlchemyControls" class="dm-deck" hidden>',
+   '<label>Alchemical formula<select id="dmAlchemyPreset"><option value="stone-ascension">Stone Ascension</option><option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option><option value="ouro-loop">Ouro Loop</option><option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option><option value="saved">My saved Alchemical Atlas composition</option></select></label>',
+   '<button id="dmEditAlchemy" type="button" style="width:100%;margin-top:9px">◈ Open Alchemical Atlas</button>',
+   '<p class="dm-muted">Bass bends geometry, mids speed motion, highs shift hue, and beats brighten the stage. Audio input and permissions remain in VJ LAB. Saved compositions refresh from this browser; use the same origin.</p>',
+   '</div>',
+   '<div class="dm-actions"><button id="dmClone" type="button">Copy A → B</button><button id="dmRandom" type="button">Random B</button><button id="dmSwap" type="button">Swap A ↔ B</button></div>',
   '<p class="dm-muted">Visuals only, not an audio crossfader. MIDI Learn in VJ LAB can control the fader. Use [ and ] to nudge by 5%.</p>',
   '</div></div>'
  ].join('');
@@ -95,13 +102,15 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   el('dmStyle').value=mix.style;el('dmMode').value=deckB.mode;
   el('dmPalette').value=deckB.palette;el('dmSeed').value=deckB.seed;el('dmPattern').value=deckB.acidPattern;
   el('dmGeometryPreset').value=deckB.geometryPreset;
+   el('dmAlchemyPreset').value=deckB.alchemyPreset;
   el('dmGeometryControls').hidden=deckB.mode!==5;
+   el('dmAlchemyControls').hidden=deckB.mode!==6;
   for(const field of el('dmShaderControls').querySelectorAll('label')){
    if(field.querySelector('#dmMode'))continue;
-   field.hidden=deckB.mode===5;
+   field.hidden=deckB.mode>=5;
   }
-  el('dmSwap').disabled=deckB.mode===5;
-  el('dmSwap').title=deckB.mode===5?'Deck A is shader-only; choose a shader for Deck B to swap.':'';
+  el('dmSwap').disabled=deckB.mode>=5;
+  el('dmSwap').title=deckB.mode>=5?'Deck A is shader-only; choose a shader for Deck B to swap.':'';
   for(const k of ['density','spiral','warp','glow','zoom']){el('dm-'+k).value=deckB[k];el('dmOut-'+k).textContent=String(deckB[k]);}
  };
  el('dmEnabled').addEventListener('change',e=>{interactionRevision++;mix.enabled=e.target.checked;sync();emit();});
@@ -112,11 +121,15 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   el(id).addEventListener('input',e=>{interactionRevision++;deckB=cleanDeck({[k]:Number(e.target.value)},deckB);sync();emit();});
  }
  el('dmGeometryPreset').addEventListener('change',e=>{interactionRevision++;deckB.geometryPreset=e.target.value;sync();emit();});
+  el('dmAlchemyPreset').addEventListener('change',e=>{interactionRevision++;deckB=cleanDeck({alchemyPreset:e.target.value},deckB);sync();emit();});
+  el('dmEditAlchemy').addEventListener('click',()=>{global.location.href='alchemy.html';});
  el('dmEditGeometry').addEventListener('click',()=>{global.PhiGeometryLab?.instance?.activate(true);});
  el('dmClone').addEventListener('click',()=>{interactionRevision++;deckB=cleanDeck(getA());sync();emit();});
- el('dmRandom').addEventListener('click',()=>{interactionRevision++;if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
+ el('dmRandom').addEventListener('click',()=>{interactionRevision++;if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}
+    else if(deckB.mode===6){const options=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos'];deckB.alchemyPreset=options[Math.floor(Math.random()*options.length)];}
+    else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
  el('dmSwap').addEventListener('click',()=>{
-  if(deckB.mode===5||typeof onSwap!=='function')return; // Main Deck A supports shader modes 0–4 only.
+  if(deckB.mode>=5||typeof onSwap!=='function')return; // Main Deck A supports shader modes 0–4 only.
   interactionRevision++;const previous=onSwap({...deckB});deckB=cleanDeck(previous);sync();emit();
  });
  sync();
@@ -163,14 +176,15 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   const w=Math.max(2,Math.round(canvas.width*.7)),h=Math.max(2,Math.round(canvas.height*.7));
   ensureSlots(gl,w,h);
   renderWorld(getA(),gpu.slots[0].fbo,w,h);
-  if(deckB.mode===5){
-   if(typeof renderGeometry!=='function')throw Error('Geometry deck renderer unavailable');
+  if(deckB.mode===5||deckB.mode===6){
+   const renderVector=deckB.mode===5?renderGeometry:renderAlchemy;
+   if(typeof renderVector!=='function')throw Error('Vector deck renderer unavailable');
    if(!gpu.geometryCanvas){gpu.geometryCanvas=document.createElement('canvas');gpu.geometryCtx=gpu.geometryCanvas.getContext('2d',{alpha:false});}
    if(!gpu.geometryCtx)throw Error('No 2D context for geometry texture');
    const g=gpu.geometryCanvas;
    if(g.width!==w)g.width=w;
    if(g.height!==h)g.height=h;
-   if(renderGeometry(deckB,gpu.geometryCtx,g)===false)throw Error('Geometry deck draw failed');
+   if(renderVector(deckB,gpu.geometryCtx,g)===false)throw Error('Vector deck draw failed');
    // Upload as a texture attached to slot B, never render into its FBO from the CPU.
    // Canvas rows are top-down: flip once on upload for correct GL UV orientation.
    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
@@ -201,8 +215,9 @@ function create({root,getA,onChange,onSwap,renderGeometry}){
   for(let i=0;i<2;i++){
    if(cpu[i].c.width!==w)cpu[i].c.width=w;
    if(cpu[i].c.height!==h)cpu[i].c.height=h;
-   if(i===1&&deckB.mode===5){
-    if(typeof renderGeometry!=='function'||renderGeometry(deckB,cpu[i].ctx,cpu[i].c)===false)throw Error('Geometry deck draw failed');
+   if(i===1&&(deckB.mode===5||deckB.mode===6)){
+    const renderVector=deckB.mode===5?renderGeometry:renderAlchemy;
+    if(typeof renderVector!=='function'||renderVector(deckB,cpu[i].ctx,cpu[i].c)===false)throw Error('Vector deck draw failed');
    }else renderWorld(i===0?getA():deckB,cpu[i].ctx,cpu[i].c);
   }
   const t=mix.crossfade/100;
