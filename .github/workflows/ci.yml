@@ -29,3 +29,4 @@ jobs:
           node tests/alchemy-deck.mjs
           node tests/alchemy-sequence.mjs
           node tests/alchemy-conductor.mjs
+          node tests/foldmesh.mjs
