@@ -225,7 +225,13 @@
       if(!last)last=now;
       const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;
       if(!state.paused)clock+=dt;
-      if(now-frame>32||!frame){resize();draw(ctx,canvas,state,clock);frame=now;}
+      if(typeof options.onTick==='function')options.onTick(state.paused?0:dt,clock);
+      if(now-frame>32||!frame){
+        resize();
+        if(typeof options.renderFrame==='function')options.renderFrame(ctx,canvas,state,clock);
+        else draw(ctx,canvas,state,clock);
+        frame=now;
+      }
       root.requestAnimationFrame(tick);
     }
     function setState(patch) {state=normalize({...state,...patch});report({...state});return {...state};}
@@ -235,7 +241,9 @@
     function randomize(){return setState({seed:1+Math.floor(Math.random()*999999)});}
     root.requestAnimationFrame(tick);report({...state});
     return {getState:()=>({...state}),setState,setSymbol,setStage,advance,randomize,
-      redraw:()=>{resize();draw(ctx,canvas,state,clock);},destroy:()=>{active=false;},
+      redraw:()=>{resize();if(typeof options.renderFrame==='function')
+        options.renderFrame(ctx,canvas,state,clock);else draw(ctx,canvas,state,clock);},
+      destroy:()=>{active=false;},
       exportRecipe:()=>({app:'PhiMath Alchemy',...state})};
   }
   root.PhiAlchemy=Object.freeze({VERSION,stages,symbols,archetypes,defaults,normalize,
