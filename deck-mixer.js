@@ -14,7 +14,7 @@ function cleanDeck(obj,base=fallback){
  for(const [k,[lo,hi]] of Object.entries(limits))result[k]=Math.round(clamp(obj?.[k]??base[k],lo,hi));
  for(const k of ['acidCycle','pointer'])result[k]=typeof obj?.[k]==='boolean'?obj[k]:Boolean(base[k]);
  result.geometryPreset=['live','metatron','flower','stars','mandala','phi'].includes(obj?.geometryPreset)?obj.geometryPreset:(base.geometryPreset||'flower');
-  result.alchemyPreset=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','saved'].includes(obj?.alchemyPreset)
+  result.alchemyPreset=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','saved','sequence'].includes(obj?.alchemyPreset)
     ?obj.alchemyPreset:(base.alchemyPreset||'stone-ascension');
  return result;
 }
@@ -87,7 +87,7 @@ function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
   '<p class="dm-muted">Preset geometries respond to VJ LAB automatically. My Geometry Lab uses your saved layer and audio-response settings. Return from its editor to watch the crossfade.</p>',
   '</div>',
   '<div id="dmAlchemyControls" class="dm-deck" hidden>',
-   '<label>Alchemical formula<select id="dmAlchemyPreset"><option value="stone-ascension">Stone Ascension</option><option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option><option value="ouro-loop">Ouro Loop</option><option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option><option value="saved">My saved Alchemical Atlas composition</option></select></label>',
+   '<label>Alchemical formula<select id="dmAlchemyPreset"><option value="stone-ascension">Stone Ascension</option><option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option><option value="ouro-loop">Ouro Loop</option><option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option><option value="saved">My saved Alchemical Atlas composition</option><option value="sequence">Great Work · six-stage live sequence</option></select></label>',
    '<button id="dmEditAlchemy" type="button" style="width:100%;margin-top:9px">◈ Open Alchemical Atlas</button>',
    '<p class="dm-muted">Bass bends geometry, mids speed motion, highs shift hue, and beats brighten the stage. Audio input and permissions remain in VJ LAB. Saved compositions refresh from this browser; use the same origin.</p>',
    '</div>',
@@ -126,7 +126,7 @@ function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
  el('dmEditGeometry').addEventListener('click',()=>{global.PhiGeometryLab?.instance?.activate(true);});
  el('dmClone').addEventListener('click',()=>{interactionRevision++;deckB=cleanDeck(getA());sync();emit();});
  el('dmRandom').addEventListener('click',()=>{interactionRevision++;if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}
-    else if(deckB.mode===6){const options=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos'];deckB.alchemyPreset=options[Math.floor(Math.random()*options.length)];}
+    else if(deckB.mode===6){const options=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','sequence'];deckB.alchemyPreset=options[Math.floor(Math.random()*options.length)];}
     else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
  el('dmSwap').addEventListener('click',()=>{
   if(deckB.mode>=5||typeof onSwap!=='function')return; // Main Deck A supports shader modes 0–4 only.
