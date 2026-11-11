@@ -41,6 +41,7 @@ assert.ok(html.includes('lab.renderTo(context,targetCanvas,formula,playingTime,v
 assert.ok(html.includes("localStorage.getItem('phimath-alchemy-r1')"));
 assert.ok(pages.includes('cp alchemy-engine.js site/alchemy-engine.js'));
 assert.equal(mix.cleanDeck({mode:6,alchemyPreset:'rebis-merge'}).alchemyPreset,'rebis-merge');
+assert.equal(mix.cleanDeck({mode:6,alchemyPreset:'sequence'}).alchemyPreset,'sequence');
 assert.equal(mix.cleanDeck({mode:6,alchemyPreset:'javascript:alert(1)'}).alchemyPreset,'stone-ascension');
 assert.equal(mix.cleanDeck({mode:5}).mode,5,'existing geometry mode is stable');
 const old=mix.cleanDeck({mode:4,palette:5});
