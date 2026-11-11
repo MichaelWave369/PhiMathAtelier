@@ -370,3 +370,19 @@ The original [Alchemical Atlas](alchemy.html) remains a separate offline study w
 **Compatibility:** Deck A remains one of the five original shader modes. Vector-based Sacred Geometry (mode 5) and Alchemical Atlas (mode 6) are Deck B-only, so Swap A ↔ B is disabled while either is selected. Existing saved recipes without `alchemyPreset` retain their old modes. New mixer recipes include the validated formula ID, and all rendering stays local. The main PNG/WebM outputs use the existing composite stage, including Alchemy when it is on Deck B.
 
 **Validation:** `node tests/alchemy-deck.mjs` tests the pure audio adapter and CPU/GPU composition paths; the existing CI workflow also tests the original worlds, geometry, mixer and Alchemy. No new runtime dependencies. Manual browser checks remain appropriate, especially GPU texture orientation, mixed-frame exports, audio permission flow and mobile performance.
+
+## Great Work Engine — R3: deterministic six-stage sequencer
+
+The Alchemical Atlas has a **Great Work Sequencer** with an opt-in `Auto-play all six operations` switch. It travels through:
+
+`Prima Materia → Calcination → Dissolution → Sublimation → Coagulation → Transmutation`
+
+At each stage the current formula holds for the selected time, then crossfades into the next procedural Canvas2D scene using an eased dissolve. Hold (2–30 seconds), transition (0.2–4 seconds), and looping are adjustable. Turn autoplay off to return to manual stage selection. **Restart from Prima Materia** begins the journey again. Selecting a stage or symbol during playback retargets the sequence to that step; switching out of Sequence mode stops autoplay.
+
+The sequencer is also exposed in the main **Dual-Deck Visual Mixer**. Select `Alchemical Atlas` for Deck B and `Great Work · six-stage live sequence` as its Formula. The default live score uses 7-second holds, 1.5-second fades and continuous looping. The existing Deck A/Deck B fader can still blend, wipe or iris this evolving image into a Galaxy, Resonance Field or Chromatic Warp. Audio modulation remains the on-device VJ LAB band's existing opt-in mechanism; no audio is recorded or uploaded by this feature.
+
+**Time and persistence:** the standalone sequencer shares its animation pause with the Atlas and stores its duration/loop preferences under a separate `phimath-alchemy-sequence-r1` browser-local key. Playback is opt-in on every reload. Version-1 alchemical JSON recipes can include a `sequence` object, but importing one never automatically starts autoplay. The mixer sequence uses a separate real-time clock that runs only when its Deck B sequence is selected and the studio is unpaused, resetting when the source is deselected. Old recipes keep their existing behavior.
+
+The implementation uses the shared `alchemy-sequence.js` module, with a deterministic frame router and a reusable two-scene canvas buffer. It is a **creative visual score**; the six-stage taxonomy is inspired by historical symbolic vocabulary, not a claim about chemical reactions or ancient physics.
+
+**Verification:** `node tests/alchemy-sequence.mjs` tests chronological stage routing, smooth blending, looping and nonlooping termination, parameter clamps, buffer reuse, UI wiring, and Deck B integration. The CI smoke suite runs it with the existing renderer, VJ, mixer, geometry and Alchemy tests. The explicit GitHub Pages upload includes the new JavaScript module and fails if it is missing.
