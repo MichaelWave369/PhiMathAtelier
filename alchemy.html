@@ -45,6 +45,15 @@ select{width:100%;padding:10px;color:var(--text);background:#242635;border:1px s
 .sequence-controls output{color:#efc990;font-variant-numeric:tabular-nums}
 .sequence-controls progress{width:100%;height:9px;accent-color:#e6b977}
 .sequence-controls .sequence-status{font-size:11px;color:#b8bdcf;min-height:20px;margin-top:6px}
+
+.conductor{margin-top:13px;border:1px solid #64506c;background:#191828;border-radius:12px;padding:12px 14px}
+.conductor summary{font:18px Georgia,serif;color:#eac59a;cursor:pointer;padding:2px 0 10px}
+.conductor label{display:grid;gap:4px;font-size:11px;color:#c4c0ce;margin:8px 0}
+.conductor input[type=text],.conductor input[type=number],.conductor select{min-width:0;width:100%;color:var(--text);background:#242635;border:1px solid #4c4b5b;border-radius:6px;padding:7px}
+.conductor label.cond-check{display:flex;align-items:center;gap:7px}
+.conductor .cond-step{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:6px;border-top:1px solid #323344;padding-top:5px}
+.conductor .cond-step label{min-width:0}.conductor .cond-readout{color:#e8c58c;font-size:12px;line-height:1.55}
+.conductor .btn{padding:8px}
 .preset-label{display:block;margin:8px 0;font-size:12px}.mode-explain{font-size:12px;color:#b9bbc7;margin-top:10px}.status{font-size:11px;color:#b8c4c9;min-height:16px}
 footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11px;line-height:1.6}
 [hidden]{display:none!important}
@@ -98,7 +107,42 @@ footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11
        <div class="sequence-status" id="seqStatus" role="status" aria-live="off">Manual stage selection. Autoplay is off.</div>
        <button class="btn" type="button" id="seqRestart">↺ Restart from Prima Materia</button>
      </div>
-     <p class="mode-explain" id="modeExplain">Study: inspect a symbol, stage, and mathematical mapping.</p>
+     <details class="conductor" id="condPanel">
+        <summary>⚡ Alchemical Performance Conductor · R4</summary>
+        <p class="mode-explain">Beat-synchronized visual scores. Use Demo pulse here, or run a score with VJ LAB on Deck B.</p>
+        <label for="condSource">Performance score
+          <select id="condSource">
+            <option value="sixfold">Sixfold Journey · 6 operations</option>
+            <option value="three-gates">Three Gates · 3 operations</option>
+            <option value="nine-pulses">Nine Pulses · 9 beats per step</option>
+            <option value="slot-0">Saved score slot 1</option>
+            <option value="slot-1">Saved score slot 2</option>
+            <option value="slot-2">Saved score slot 3</option>
+            <option value="slot-3">Saved score slot 4</option>
+          </select>
+        </label>
+        <label for="condName">Score name<input id="condName" type="text" maxlength="64" value="Sixfold Journey"></label>
+        <label for="condLoop" class="cond-check"><input type="checkbox" id="condLoop" checked> Loop score</label>
+        <div id="condSteps" aria-label="Editable score operations"></div>
+        <div class="button-row">
+          <button id="condAdd" class="btn" type="button">+ Add operation</button>
+          <button id="condRemove" class="btn" type="button">− Remove last</button>
+        </div>
+        <div class="button-row">
+          <button id="condStart" class="btn primary" type="button">▶ Conductor</button>
+          <button id="condDemo" class="btn" type="button" aria-pressed="false">Demo pulse</button>
+          <button id="condTap" class="btn" type="button">⚡ Tap beat</button>
+          <button id="condStop" class="btn" type="button">■ Stop</button>
+        </div>
+        <p class="cond-readout" id="condReadout" role="status" aria-live="polite">Conductor stopped.</p>
+        <div class="button-row">
+          <button id="condSave" class="btn" type="button">Save to selected slot</button>
+          <button id="condExport" class="btn" type="button">↓ Export score</button>
+          <button id="condImport" class="btn" type="button">↑ Import score</button>
+        </div>
+        <input id="condFile" type="file" accept=".json,application/json" hidden>
+      </details>
+      <p class="mode-explain" id="modeExplain">Study: inspect a symbol, stage, and mathematical mapping.</p>
    </section>
    <footer>Φ369 · Symbolic mathematics and original generative art. No online services, tracking, or copied historical illustrations.</footer>
  </main>
@@ -138,6 +182,7 @@ footer{padding:16px 23px;border-top:1px solid #2a2d3a;color:#999eac;font-size:11
 </div>
 <script src="./alchemy-engine.js"></script>
 <script src="./alchemy-sequence.js"></script>
+<script src="./alchemy-conductor.js"></script>
 <script src="./alchemy-ui.js"></script>
 </body>
 </html>
