@@ -292,6 +292,7 @@ void main(){
 <script src="deck-mixer.js"></script>
 <script src="geometry-lab.js"></script>
 <script src="alchemy-engine.js"></script>
+<script src="alchemy-sequence.js"></script>
 <script src="performance-cues.js"></script>
 <script src="performance-timeline.js"></script>
 <script src="scene-dissolve.js"></script>
@@ -309,6 +310,8 @@ void main(){
   {title:'Chromatic Warp',sub:'Chromatic Warp / Equation 05',mathTitle:'A pattern stands still. Its colors travel.',intro:'Inspired by classic 1992-era mathematical color cycling: index the geometry, then rotate a palette.',eq:'I(x,y) = ½ + 0.26 sin f(x,y) + 0.24 cos g(x,y)\nC(x,y,t) = P[⌊B · fract(I(x,y) + vt)⌋ / B]',desc:'Six original <strong>polar, wave, and interference fields</strong> yield a stationary 8-bit index field. The animated palette makes bands appear to flow. Inspired by the technique of AcidWarp, not a port or reproduction of its original formulas.'}
  ];
  const canvas=$('art'), stage=$('stage');
+ const greatWorkRenderer=window.PhiAlchemySequence.createRenderer(window.PhiAlchemy,document);
+ let greatWorkTime=0;
  const mixer=window.PhiDeckMixer.create({
   root:$('deckMixer'),getA:()=>state,
   renderGeometry:(deck,context,targetCanvas)=>{
@@ -323,6 +326,12 @@ void main(){
    renderAlchemy:(deck,context,targetCanvas)=>{
     const lab=window.PhiAlchemy;
     if(!lab?.renderTo)return false;
+    if(deck.alchemyPreset==='sequence'){
+     const base=lab.normalize({...lab.defaults,seed:deck.seed});
+     const result=greatWorkRenderer.renderTo(context,targetCanvas,base,greatWorkTime,
+       {enabled:true,holdSeconds:7,fadeSeconds:1.5,loop:true},vj.levels,'prima');
+     return result!==false;
+    }
     let formula=lab.generatePreset(deck.alchemyPreset);
     if(deck.alchemyPreset==='saved'){
      formula=lab.generatePreset('stone-ascension');
@@ -605,6 +614,11 @@ void main(){
   if(!active)return;
   const delta=Math.min(.1,(now-last)/1000);last=now;
   if(!state.paused)playingTime+=delta*state.speed/100;
+  // R3 clock is real elapsed seconds, independent of shader speed or audio.
+  const deck=mixer.deckB;
+  const autoSequence=mixer.enabled&&deck.mode===6&&deck.alchemyPreset==='sequence';
+  if(autoSequence&&!state.paused)greatWorkTime+=delta;
+  if(!autoSequence)greatWorkTime=0;
    if(state.mode===4&&state.acidAuto&&!state.paused){
     autoElapsed+=delta;
     if(autoElapsed>=20){state.acidPattern=(state.acidPattern+1)%6;autoElapsed=0;updateUI();}
