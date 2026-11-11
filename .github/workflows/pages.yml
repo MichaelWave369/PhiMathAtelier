@@ -19,6 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Prepare static site
         run: |
           mkdir -p site
@@ -40,7 +43,10 @@ jobs:
           for file in alchemy.html alchemy-engine.js alchemy-sequence.js alchemy-conductor.js alchemy-conductor-ui.js alchemy-ui.js; do
             test -s "site/$file" || { echo "Missing Pages artifact: $file"; exit 1; }
           done
+          # Catch new labs and linked modules not yet in the historical allowlist.
+          cp -- ./*.html ./*.js site/
           touch site/.nojekyll
+          node tests/pages-assets.mjs site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
