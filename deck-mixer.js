@@ -8,14 +8,16 @@ const limits={mode:[0,6],palette:[0,5],seed:[0,999999],density:[15,100],
  spiral:[20,300],warp:[0,200],glow:[25,250],zoom:[50,220],
  acidPattern:[0,5],acidBands:[4,48]};
 const fallback={mode:4,palette:5,seed:369,density:72,spiral:140,warp:65,
- glow:120,zoom:100,acidPattern:0,acidBands:16,acidCycle:true,pointer:true,geometryPreset:'flower',alchemyPreset:'stone-ascension'};
+ glow:120,zoom:100,acidPattern:0,acidBands:16,acidCycle:true,pointer:true,geometryPreset:'flower',alchemyPreset:'stone-ascension',conductorScore:'sixfold'};
 function cleanDeck(obj,base=fallback){
  const result={};
  for(const [k,[lo,hi]] of Object.entries(limits))result[k]=Math.round(clamp(obj?.[k]??base[k],lo,hi));
  for(const k of ['acidCycle','pointer'])result[k]=typeof obj?.[k]==='boolean'?obj[k]:Boolean(base[k]);
  result.geometryPreset=['live','metatron','flower','stars','mandala','phi'].includes(obj?.geometryPreset)?obj.geometryPreset:(base.geometryPreset||'flower');
-  result.alchemyPreset=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','saved','sequence'].includes(obj?.alchemyPreset)
+  result.alchemyPreset=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','saved','sequence','conductor'].includes(obj?.alchemyPreset)
     ?obj.alchemyPreset:(base.alchemyPreset||'stone-ascension');
+ result.conductorScore=['sixfold','three-gates','nine-pulses','slot-0','slot-1','slot-2','slot-3'].includes(obj?.conductorScore)
+  ?obj.conductorScore:(base.conductorScore||'sixfold');
  return result;
 }
 function cleanMix(raw){return {enabled:raw?.enabled===true,crossfade:Math.round(clamp(raw?.crossfade??0,0,100)),
@@ -87,8 +89,12 @@ function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
   '<p class="dm-muted">Preset geometries respond to VJ LAB automatically. My Geometry Lab uses your saved layer and audio-response settings. Return from its editor to watch the crossfade.</p>',
   '</div>',
   '<div id="dmAlchemyControls" class="dm-deck" hidden>',
-   '<label>Alchemical formula<select id="dmAlchemyPreset"><option value="stone-ascension">Stone Ascension</option><option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option><option value="ouro-loop">Ouro Loop</option><option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option><option value="saved">My saved Alchemical Atlas composition</option><option value="sequence">Great Work · six-stage live sequence</option></select></label>',
-   '<button id="dmEditAlchemy" type="button" style="width:100%;margin-top:9px">◈ Open Alchemical Atlas</button>',
+   '<label>Alchemical formula<select id="dmAlchemyPreset"><option value="stone-ascension">Stone Ascension</option><option value="mercury-bloom">Mercury Bloom</option><option value="salt-matrix">Salt Matrix</option><option value="ouro-loop">Ouro Loop</option><option value="rebis-merge">Rebis Merge</option><option value="prima-chaos">Prima Chaos</option><option value="saved">My saved Alchemical Atlas composition</option><option value="sequence">Great Work · six-stage live sequence</option><option value="conductor">Performance Conductor · beat-synchronized</option></select></label>',
+   '<div id="dmConductorControls" class="dm-deck" hidden>',
+    '<label>Conductor score<select id="dmConductorScore"><option value="sixfold">Sixfold Journey</option><option value="three-gates">Three Gates</option><option value="nine-pulses">Nine Pulses</option><option value="slot-0">Saved slot 1</option><option value="slot-1">Saved slot 2</option><option value="slot-2">Saved slot 3</option><option value="slot-3">Saved slot 4</option></select></label>',
+    '<p class="dm-muted">Counts distinct VJ LAB beats. If no beat is detected, the current stage holds. Cue Bank and Timeline store the chosen score slot.</p>',
+    '</div>',
+    '<button id="dmEditAlchemy" type="button" style="width:100%;margin-top:9px">◈ Open Alchemical Atlas</button>',
    '<p class="dm-muted">Bass bends geometry, mids speed motion, highs shift hue, and beats brighten the stage. Audio input and permissions remain in VJ LAB. Saved compositions refresh from this browser; use the same origin.</p>',
    '</div>',
    '<div class="dm-actions"><button id="dmClone" type="button">Copy A → B</button><button id="dmRandom" type="button">Random B</button><button id="dmSwap" type="button">Swap A ↔ B</button></div>',
@@ -103,6 +109,8 @@ function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
   el('dmPalette').value=deckB.palette;el('dmSeed').value=deckB.seed;el('dmPattern').value=deckB.acidPattern;
   el('dmGeometryPreset').value=deckB.geometryPreset;
    el('dmAlchemyPreset').value=deckB.alchemyPreset;
+   el('dmConductorScore').value=deckB.conductorScore;
+   el('dmConductorControls').hidden=deckB.mode!==6||deckB.alchemyPreset!=='conductor';
   el('dmGeometryControls').hidden=deckB.mode!==5;
    el('dmAlchemyControls').hidden=deckB.mode!==6;
   for(const field of el('dmShaderControls').querySelectorAll('label')){
@@ -122,11 +130,12 @@ function create({root,getA,onChange,onSwap,renderGeometry,renderAlchemy}){
  }
  el('dmGeometryPreset').addEventListener('change',e=>{interactionRevision++;deckB.geometryPreset=e.target.value;sync();emit();});
   el('dmAlchemyPreset').addEventListener('change',e=>{interactionRevision++;deckB=cleanDeck({alchemyPreset:e.target.value},deckB);sync();emit();});
+  el('dmConductorScore').addEventListener('change',e=>{interactionRevision++;deckB=cleanDeck({conductorScore:e.target.value},deckB);sync();emit();});
   el('dmEditAlchemy').addEventListener('click',()=>{global.location.href='alchemy.html';});
  el('dmEditGeometry').addEventListener('click',()=>{global.PhiGeometryLab?.instance?.activate(true);});
  el('dmClone').addEventListener('click',()=>{interactionRevision++;deckB=cleanDeck(getA());sync();emit();});
  el('dmRandom').addEventListener('click',()=>{interactionRevision++;if(deckB.mode===5){const options=['flower','metatron','stars','mandala','phi'];deckB.geometryPreset=options[Math.floor(Math.random()*options.length)];}
-    else if(deckB.mode===6){const options=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','sequence'];deckB.alchemyPreset=options[Math.floor(Math.random()*options.length)];}
+    else if(deckB.mode===6){const options=['mercury-bloom','salt-matrix','ouro-loop','stone-ascension','rebis-merge','prima-chaos','sequence','conductor'];deckB.alchemyPreset=options[Math.floor(Math.random()*options.length)];}
     else deckB.seed=1+Math.floor(Math.random()*999999);sync();emit();});
  el('dmSwap').addEventListener('click',()=>{
   if(deckB.mode>=5||typeof onSwap!=='function')return; // Main Deck A supports shader modes 0–4 only.
