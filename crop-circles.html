@@ -44,6 +44,7 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 <p id="status" role="status" aria-live="polite"></p>
 <h3>Reading protocol</h3>
 <p>The ten published angle values were measured to roughly 5° precision. This tool divides each interval by the chosen base angle and rounds to the nearest integer. A decimal point after the first digit is a convention, not inferred from interval lengths.</p>
+<p class="note">Your uploaded photo is <strong>not</strong> linked to the default Barbury π angles. The export will mark the streams as independent unless you explicitly apply a trace from that photo.</p>
 <p class="note">Research safeguard: the original π reading was identified before this program existed. Reproducing it is a verification of the published arithmetic, <strong>not</strong> a blind discovery or evidence of nonhuman origin.</p>
 <h3>Possible follow-ups</h3><p>Independent image measurements, geometry similarity, blinded hypotheses, and sky/geographic correlation with proper multiple-testing controls are future adapters, not claims made by this build.</p>
 </section>
@@ -86,7 +87,7 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 const E=window.PhiCropCircle;
 const $=id=>document.getElementById(id);
 const canvas=$('stage'),ctx=canvas.getContext('2d');
-let image=null,centre=null,boundaries=[],vision=null,lastResult=null,lastNull=null,lastAngles=E.SAMPLE.slice();
+let image=null,centre=null,boundaries=[],vision=null,tracedFromCurrentImage=false,lastResult=null,lastNull=null,lastAngles=E.SAMPLE.slice();
 const element=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;return e;};
 function getAngles(){return E.parseAngles($('angles').value);}
 function report(message){$('status').textContent=message;}
@@ -178,14 +179,15 @@ function draw(){
   $('detectRings').disabled=!image;
 }
 $('analyze').addEventListener('click',showResults);
+$('angles').addEventListener('input',()=>{tracedFromCurrentImage=false;});
 $('angles').addEventListener('change',showResults);
 $('unit').addEventListener('change',showResults);
-$('sample').addEventListener('click',()=>{$('angles').value=E.SAMPLE.join(', ');$('unit').value='36';$('provenance').value='published';showResults();});
+$('sample').addEventListener('click',()=>{tracedFromCurrentImage=false;$('angles').value=E.SAMPLE.join(', ');$('unit').value='36';$('provenance').value='published';showResults();});
 $('imageFile').addEventListener('change',ev=>{
   const f=ev.target.files&&ev.target.files[0];if(!f)return;
   if(!f.type.startsWith('image/')){report('Please choose an image file.');return;}
   const reader=new FileReader();
-  reader.onload=()=>{const next=new Image();next.onload=()=>{image=next;centre=null;boundaries=[];resetVision();draw();report('Image loaded locally. Select a centre or run Find circular edges automatically.');};next.onerror=()=>report('Image could not be opened.');next.src=reader.result;};
+  reader.onload=()=>{const next=new Image();next.onload=()=>{image=next;centre=null;boundaries=[];tracedFromCurrentImage=false;resetVision();draw();report('Image loaded locally. Select a centre or run Find circular edges automatically.');};next.onerror=()=>report('Image could not be opened.');next.src=reader.result;};
   reader.onerror=()=>report('Could not read the image.');reader.readAsDataURL(f);
 });
 canvas.addEventListener('click',ev=>{
@@ -195,14 +197,14 @@ canvas.addEventListener('click',ev=>{
   resetVision();draw();
 });
 $('undo').addEventListener('click',()=>{if(boundaries.length)boundaries.pop();else centre=null;resetVision();draw();});
-$('clear').addEventListener('click',()=>{image=null;centre=null;boundaries=[];resetVision();$('imageFile').value='';draw();report('Trace cleared.');});
+$('clear').addEventListener('click',()=>{image=null;centre=null;boundaries=[];tracedFromCurrentImage=false;resetVision();$('imageFile').value='';draw();report('Trace cleared.');});
 $('applyTrace').addEventListener('click',()=>{
   try{
     const measured=E.traceAngles(centre,boundaries,$('direction').value);
     if(measured.some(n=>n<=0))throw Error('Overlapping rays produced zero-length intervals; adjust points.');
     $('angles').value=measured.map(n=>n.toFixed(2)).join(', ');
     $('provenance').value='traced';
-    showResults();report('Manually traced '+measured.length+' intervals. Accuracy depends on alignment and reading order.');
+    showResults();tracedFromCurrentImage=!!lastResult;report('Manually traced '+measured.length+' intervals. Accuracy depends on alignment and reading order.');
   }catch(error){report(error.message);}
 });
 $('detectRings').addEventListener('click',()=>{
@@ -245,7 +247,7 @@ $('simulate').addEventListener('click',()=>{
 });
 $('export').addEventListener('click',()=>{
   if(!lastResult){report('Nothing valid to export.');return;}
-  const receipt={schema:'phi-crop-circle-observatory/v0.2',generatedAt:new Date().toISOString(),input:{angles:lastAngles,provenance:$('provenance').value,sourceUrl:$('provenance').value==='published'?'https://www.cropcirclearchives.co.uk/archives/2008/barbury/barburyRC2008a.html':null,unit:lastResult.unit,direction:$('direction').value,imageStored:false},result:lastResult,vision:vision?{...vision,originalImageDimensions:{width:image.width,height:image.height},selectedCenter:!!centre}:null,nullSimulation:lastNull,limitations:'Observational decoding only; no inference of authorship, intent, geographic meaning or alien communication.'};
+  const receipt={schema:'phi-crop-circle-observatory/v0.2',generatedAt:new Date().toISOString(),input:{angles:lastAngles,provenance:$('provenance').value,sourceUrl:$('provenance').value==='published'?'https://www.cropcirclearchives.co.uk/archives/2008/barbury/barburyRC2008a.html':null,unit:lastResult.unit,direction:$('direction').value,imageStored:false},result:lastResult,relationships:{angleMeasurementsDerivedFromUploadedImage:tracedFromCurrentImage,visionAndAngularDecodeLinked:!!vision&&tracedFromCurrentImage},vision:vision?{...vision,originalImageDimensions:{width:image.width,height:image.height},selectedCenter:!!centre}:null,nullSimulation:lastNull,limitations:'Observational decoding only; no inference of authorship, intent, geographic meaning or alien communication.'};
   const blob=new Blob([JSON.stringify(receipt,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='crop-circle-receipt.json';a.click();URL.revokeObjectURL(url);
 });
 showResults();
