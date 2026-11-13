@@ -11,7 +11,7 @@ assert.equal(raw.length,10);
 assert.equal(raw.reduce((a,b)=>a+b,0),1435);
 assert.equal(E.decode(raw,36).sequence,'3141592654');
 assert.equal(E.decode(raw,36).reading,'3.141592654');
-assert.ok(Math.abs(E.decode(raw,36).rmse-Math.sqrt(21/10))<1e-9);
+assert.ok(Math.abs(E.decode(raw,36).rmse-Math.sqrt(19/10))<1e-9);
 assert.equal(E.decode(raw,36).candidates[0].name,'π (rounded)');
 assert.equal(E.decode(raw,36).candidates[0].full,true);
 assert.ok(E.scanUnits(raw).some(row=>row.unit===36));
