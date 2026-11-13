@@ -1,0 +1,26 @@
+name: Crop Circle Observatory
+on:
+  pull_request:
+    paths:
+      - 'crop-circles.html'
+      - 'crop-circle-engine.js'
+      - 'tests/crop-circles.mjs'
+      - '.github/workflows/crop-circle-observatory.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'crop-circles.html'
+      - 'crop-circle-engine.js'
+      - 'tests/crop-circles.mjs'
+      - '.github/workflows/crop-circle-observatory.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/crop-circles.mjs
