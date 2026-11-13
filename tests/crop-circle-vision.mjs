@@ -27,6 +27,10 @@ assert.ok(Math.hypot(found.center.x-90,found.center.y-90)<=8,'center should be n
 assert.ok(found.rings.some(r=>Math.abs(r.radius-46)<=5&&r.support>=.55));
 assert.ok(found.rings.some(r=>Math.abs(r.radius-71)<=5&&r.support>=.55));
 assert.equal(found.rings.some(r=>!Number.isFinite(r.score)),false);
+assert.ok(Math.abs(found.radialSignature.ratiosToInnermost[0]-1)<.0001);
+assert.ok(found.radialSignature.ratiosToInnermost[1]>1.4);
+assert.equal(found.radialSignature.normalizedRadii.length,found.rings.length);
+assert.equal(V.detect(image()).radialSignature.ratiosToInnermost.length,0);
 assert.equal(V.detect(image()).rings.length,0,'blank image should have no rings');
 assert.equal(V.detect(image()).center,null,'blank image should not produce a center');
 assert.equal(JSON.stringify(found),JSON.stringify(V.detect(ringImage)),'detection must be reproducible');
