@@ -108,6 +108,11 @@
    width:image.width,height:image.height,edgeThreshold:+t.toFixed(3),
    center:centre?{x:+centre.x.toFixed(2),y:+centre.y.toFixed(2)}:null,
    rings:rings.map(p=>({radius:p.radius,support:+p.support.toFixed(3),coverage:p.coverage,score:+p.score.toFixed(3)})),
+   radialSignature:{
+    normalizedRadii:rings.map(p=>+(p.radius/Math.min(image.width,image.height)).toFixed(4)),
+    ratiosToInnermost:rings.map(p=>+(p.radius/rings[0].radius).toFixed(4)),
+    note:'Scale-normalized within the analyzed pixels, not invariant to perspective or different center choices.'
+   },
    notes:'Candidate concentric edge structures. Scores measure geometric support, not confidence of intentional meaning. Perspective distortion, crop damage and user-selected centers can bias results.'};
  }
  root.PhiCropVision=Object.freeze({METHOD,edges,detect,ringScore});
