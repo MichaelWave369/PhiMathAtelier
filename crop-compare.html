@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07121b">
+<meta name="description" content="Offline, evidence-aware comparison of concentric ring geometry from crop-circle observations.">
+<title>Φ Fingerprint Atlas | Crop Circle Observatory</title>
+<style>
+:root{color-scheme:dark;--bg:#07121b;--panel:#0f202c;--line:#294556;--ink:#e9f4f1;--muted:#a3bac5;--mint:#8ee9d9;--gold:#f4cb91;--red:#f4aaaf}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui,Segoe UI,sans-serif}
+header{background:#0b1824;border-bottom:1px solid var(--line);padding:15px clamp(16px,3vw,40px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.brand{display:flex;gap:12px;align-items:center}.sigil{font:30px Georgia,serif;color:var(--mint);border:1px solid #5b8b7f;width:45px;height:45px;border-radius:13px;display:grid;place-items:center}
+.brand strong{display:block;font:26px Georgia,serif}.brand span{color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-size:10px}
+header nav{display:flex;gap:12px;font-size:12px}
+a{color:var(--mint)}button,select,input,textarea{font:inherit}
+button{color:var(--ink);background:#183243;border:1px solid #456679;border-radius:9px;cursor:pointer;padding:9px 12px;font-size:12px;font-weight:700}
+button.primary{background:var(--mint);border-color:var(--mint);color:#08221f}
+button:hover{border-color:var(--mint)}button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1560px;margin:0 auto;padding:22px clamp(16px,3vw,40px) 40px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--mint);font-weight:800}
+h1{font:clamp(28px,4vw,44px)/1.15 Georgia,serif;font-weight:400;margin:7px 0 10px}
+main>p{color:var(--muted);max-width:820px;margin:0 0 22px}
+.layout{display:grid;grid-template-columns:290px minmax(350px,1fr) 340px;gap:14px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:17px;min-width:0}
+h2{font:21px Georgia,serif;margin:0 0 12px}h3{font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:var(--mint);margin:20px 0 9px}
+p,.muted{color:var(--muted)}.panel p{font-size:12px;line-height:1.6}
+.field{margin-bottom:13px}.field label{display:block;font-weight:700;font-size:12px;margin-bottom:6px}
+.field input:not([type=file]),.field textarea,.field select,.field input[type=file]{display:block;width:100%;color:var(--ink);background:#081822;border:1px solid #415d6b;border-radius:9px;padding:9px;font-size:12px}
+.field input[type=file]{font-size:11px}.field textarea{resize:vertical;min-height:72px}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{flex:1 1 118px}
+.notice{padding:11px 12px;background:#112d38;border-left:2px solid var(--mint);border-radius:5px;font-size:12px;color:#bad5d6}
+#status{font-size:12px;min-height:26px;color:var(--gold);margin:12px 0}
+.selectable{display:flex;align-items:center;gap:9px;border:1px solid #315062;background:#101f2c;border-radius:10px;padding:9px 10px;margin:8px 0}
+.selectable.active{border-color:var(--mint);background:#14313b}.selectable button{min-width:0;text-align:left;flex:1;font-weight:650;border:none;background:transparent;padding:2px 0}
+.selectable small{display:block;font-weight:400;font-size:10px;color:var(--muted);margin-top:2px}
+.selectable .remove{flex:0 0 auto;padding:5px 7px;background:#382b34;color:#ffbfc0;border:1px solid #674b55}
+#libraryList{max-height:375px;overflow:auto;scrollbar-color:#436474 transparent}
+.visual{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.diagram{border:1px solid #24485a;background:#06151d;border-radius:12px;min-width:0;overflow:hidden}
+.diagram canvas{display:block;width:100%;aspect-ratio:1}
+.diagram .caption{border-top:1px solid var(--line);padding:8px 10px;font-size:11px;color:var(--muted)}
+.heroScore{text-align:center;padding:10px 0 3px}.heroScore strong{color:var(--mint);font:clamp(35px,5vw,55px) ui-monospace,monospace}
+.heroScore span{font-size:12px;color:var(--muted);display:block}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:9px 7px;text-align:left;border-bottom:1px solid var(--line)}th{font-size:11px;color:var(--muted);font-weight:600}
+td:nth-child(2),td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+#ranking tr.selected{background:#18323b}
+.mono{font-family:ui-monospace,Consolas,monospace}
+.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+#nullOutput{border-radius:9px;border:1px solid var(--line);padding:9px 10px;min-height:50px;color:var(--muted);font-size:12px}
+#details{word-break:break-word;white-space:pre-wrap}
+section:focus-within{scroll-margin-top:15px}
+@media(max-width:1150px){.layout{grid-template-columns:300px 1fr}.results{grid-column:1/-1}}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.results{grid-column:auto}}
+</style></head>
+<body>
+<header><div class="brand"><div class="sigil" aria-hidden="true">Φ</div><div><strong>Fingerprint Atlas</strong><span>Crop Circle Observatory · r0.3</span></div></div><nav><a href="crop-circles.html">Observatory</a><a href="index.html">Math Atelier</a></nav></header>
+<main><div class="eyebrow">Geometry before interpretation</div><h1>Compare formations without inventing conclusions.</h1>
+<p>Build a local library of concentric-ring fingerprints, compare proportions independent of absolute scale, and export traceable results. The ranking measures geometric resemblance only. The bundled examples are synthetic teaching patterns, not field observations.</p>
+<div class="layout">
+<section class="panel" aria-label="Fingerprint library">
+<h2>01 / Assemble library</h2><div class="field"><label for="name">Formation label</label><input id="name" maxlength="120" value="New observation" autocomplete="off"></div>
+<div class="field"><label for="radii">Concentric ring radii (pixels or same units)</label><textarea id="radii" spellcheck="false" placeholder="20, 45, 73, 100"></textarea></div>
+<div class="field"><label for="sourceType">Source status</label><select id="sourceType"><option value="manual">Manually measured</option><option value="synthetic">Synthetic / demonstration</option><option value="published-secondary">Published secondary measurement</option></select></div>
+<div class="field"><label for="sourceUrl">Source URL (optional)</label><input id="sourceUrl" type="url" maxlength="2048" placeholder="https://..."></div>
+<div class="actions"><button class="primary" id="add">Add fingerprint</button><button id="loadSamples">Load synthetic demos</button></div>
+<h3>Import from Observatory</h3><div class="field"><label for="importFile">Receipt JSON or exported fingerprint library</label><input id="importFile" type="file" accept=".json,application/json"></div>
+<p>Receipts from the existing image detector must contain at least two detected rings. Import retains measurement lineage where available. Do not import files from untrusted sources.</p>
+<h3>Current collection</h3><div id="libraryList" aria-live="polite"></div>
+<div class="actions"><button id="exportLibrary">Export library</button><button id="clearLibrary">Clear collection</button></div>
+<p id="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel" aria-label="Side by side geometry">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2>02 / Geometry comparison</h2><span class="label">Normalized outer radius = 1</span></div>
+<div class="field"><label for="target">Reference formation</label><select id="target"></select></div>
+<div class="visual"><div class="diagram"><canvas id="left" width="480" height="480" aria-label="Reference concentric ring diagram"></canvas><div class="caption" id="leftCaption">Reference rings</div></div><div class="diagram"><canvas id="right" width="480" height="480" aria-label="Comparison concentric ring diagram"></canvas><div class="caption" id="rightCaption">Candidate rings</div></div></div>
+<p class="notice">Overlay diagrams are redrawn from measured radii. They are not the aerial photographs, and concentric similarity does not describe noncircular crop-circle components.</p>
+<div class="heroScore"><strong id="score">—</strong><span id="scoreNote">Choose two fingerprints to compare</span></div>
+<h3>Comparison ranking</h3><table><thead><tr><th>Candidate</th><th>Rings</th><th>Similarity</th></tr></thead><tbody id="ranking"></tbody></table>
+<p id="details">Select a reference and candidate to view descriptive comparison results.</p>
+<h3>Multiple-comparison warning</h3><p>A library with many formations creates many chances to find accidental similarities. The scores are descriptive, not calibrated probabilities. Records from duplicate photography or shared reconstructions are not independent evidence.</p>
+</section>
+<section class="panel results" aria-label="Controls and audit">
+<h2>03 / Audit and controls</h2>
+<h3>Current selected pair</h3><p id="pairInfo">No comparison yet.</p>
+<h3>Uniform-radii toy null</h3><p>The null generates 1,000 random formations with the same ring count as the comparison candidate. It checks how often random radial proportions match the reference at least as well as the selected pair.</p>
+<div class="actions"><button id="runNull">Run seeded null</button><button id="exportComparison" class="primary">Export comparison</button></div>
+<div id="nullOutput" style="margin-top:11px" aria-live="polite">Not run.</div>
+<p class="notice">This is an exploratory null, not a p-value for crop-circle authorship, meaningful communication, or independent source agreement. A good match may be trivial, duplicated, deliberately constructed, or coincidental.</p>
+<h3>Measurement provenance</h3><div id="provenance"></div>
+<h3>Planned connectors</h3><p>Future PhiDiscovery review packets will preserve source independence, contradictory readings, uncertainty, and predeclared hypothesis families. No celestial or geographic map matching is performed here.</p>
+</section>
+</div></main>
+<script src="crop-circle-compare.js"></script>
+<script>
+(function(){
+ 'use strict';
+ const Engine=window.PhiCropCompare,$=id=>document.getElementById(id);
+ const store=[],MAX=100;let selected=0,candidate=null,lastNull=null;
+ function status(msg){$('status').textContent=msg;}
+ function isValidUrl(value){if(!value)return true;try{const u=new URL(value);return u.protocol==='https:'||u.protocol==='http:';}catch{return false;}}
+ function addProfile(profile){if(store.length>=MAX)throw Error('Collection limit of 100 fingerprints reached.');const p=Engine.validProfile(profile);store.push(p);return p;}
+ function demo(){
+  if(store.length){status('Clear the collection before loading synthetic examples.');return;}
+  [
+   ['Synthetic rings · A',[18,40,60,100]],
+   ['Synthetic scaled copy · B',[36,80,120,200]],
+   ['Synthetic variation · C',[16,41,65,100]],
+   ['Synthetic different · D',[5,10,11,95]],
+   ['Synthetic sparse · E',[45,100]]
+  ].forEach(([name,radii])=>addProfile(Engine.makeProfile(name,radii,{sourceType:'synthetic',notes:'Fictional demonstration, no real crop circle.'})));
+  selected=0;candidate=1;refresh();status('Five synthetic teaching fingerprints loaded; no field observations.');
+ }
+ function option(value,label){const o=document.createElement('option');o.value=value;o.textContent=label;return o;}
+ function refresh(){
+  if(selected>=store.length)selected=Math.max(0,store.length-1);
+  $('target').replaceChildren();
+  store.forEach((p,i)=>$('target').appendChild(option(String(i),p.name)));
+  $('target').disabled=store.length===0;
+  if(store.length)$('target').value=String(selected);
+  $('libraryList').replaceChildren();
+  store.forEach((p,i)=>{
+   const row=document.createElement('div');row.className='selectable'+(selected===i?' active':'');
+   const pick=document.createElement('button');pick.textContent=p.name;
+   const small=document.createElement('small');small.textContent=p.ringCount+' rings · '+p.sourceType;
+   pick.appendChild(small);pick.addEventListener('click',()=>{selected=i;candidate=null;lastNull=null;refresh();});
+   const remove=document.createElement('button');remove.className='remove';remove.textContent='×';remove.setAttribute('aria-label','Remove '+p.name);
+   remove.addEventListener('click',()=>{store.splice(i,1);if(candidate===i)candidate=null;else if(candidate!==null&&candidate>i)candidate--;if(selected>i)selected--;lastNull=null;refresh();});
+   row.append(pick,remove);$('libraryList').appendChild(row);
+  });
+  if(candidate!==null&&(candidate>=store.length||candidate===selected))candidate=null;
+  const ranked=store.length?Engine.rank(store[selected],store.map((p,i)=>({...p,sourceIndex:i})),{excludeSameName:false}):[];
+  // rank returns indices for the library passed in. Filter the *same position*, not the same name.
+  const others=ranked.filter(item=>item.index!==selected);
+  $('ranking').replaceChildren();
+  others.forEach(result=>{
+   const tr=document.createElement('tr');if(result.index===candidate)tr.className='selected';
+   const cell=document.createElement('td'),button=document.createElement('button');button.textContent=result.second;
+   button.addEventListener('click',()=>{candidate=result.index;lastNull=null;refresh();});
+   cell.appendChild(button);
+   const rings=document.createElement('td');rings.textContent=result.ringCounts[1];
+   const score=document.createElement('td');score.textContent=result.score.toFixed(2);
+   tr.append(cell,rings,score);$('ranking').appendChild(tr);
+  });
+  if(candidate===null&&others.length)candidate=others[0].index;
+  const a=store[selected],b=candidate!==null?store[candidate]:null;
+  draw($('left'),a,'#8ee9d9');draw($('right'),b,'#f4cb91');
+  $('leftCaption').textContent=a?a.name:'Add your first formation';
+  $('rightCaption').textContent=b?b.name:'No comparison available';
+  const comparison=a&&b?Engine.compare(a,b):null;
+  $('score').textContent=comparison?comparison.score.toFixed(2)+'/100':'—';
+  $('scoreNote').textContent=comparison?(comparison.status==='insufficient-structure'?'Low-information comparison: fewer than 3 rings':'Descriptive geometric similarity, not a statistical probability'):'Choose two fingerprints';
+  $('details').textContent=comparison?
+    'Normalized edit distance: '+comparison.normalizedDistance.toFixed(5)+'. '+comparison.warning:
+    'Add two fingerprints for a pairwise comparison.';
+  $('pairInfo').textContent=a&&b?a.name+'  ↔  '+b.name:'No comparison selected.';
+  $('provenance').replaceChildren();
+  [a,b].filter(Boolean).forEach(p=>{
+   const line=document.createElement('p');line.textContent=p.name+' · '+p.sourceType+(p.lineage?' · imported from '+p.lineage.receiptSchema:'')+
+    ' · '+(p.suitability==='exploratory'?'3+ rings':'low information (2 rings)')+(p.sourceUrl?' · URL recorded':'');
+   $('provenance').appendChild(line);
+  });
+  $('nullOutput').textContent=lastNull?lastNull.equalOrHigher+'/'+lastNull.trials+' synthetic matches were at least as high (frequency '+lastNull.frequency.toFixed(4)+'). This is not a scientific p-value.':'Not run for this pair.';
+  $('runNull').disabled=!(a&&b&&a.ringCount>=3&&b.ringCount>=3);
+  $('exportComparison').disabled=!comparison;
+  $('exportLibrary').disabled=!store.length;
+ }
+ function draw(canvas,p,color){
+  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+  ctx.fillStyle='#06151d';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='#294654';ctx.lineWidth=1;
+  for(let r=40;r<=210;r+=40){ctx.beginPath();ctx.arc(w/2,h/2,r,0,2*Math.PI);ctx.stroke();}
+  ctx.strokeStyle='#1b3a44';ctx.beginPath();ctx.moveTo(w/2,14);ctx.lineTo(w/2,h-14);ctx.moveTo(14,h/2);ctx.lineTo(w-14,h/2);ctx.stroke();
+  if(!p)return;
+  ctx.strokeStyle=color;ctx.lineWidth=4;
+  p.normalizedRadii.forEach((r,i)=>{
+   ctx.beginPath();ctx.arc(w/2,h/2,r*200,0,2*Math.PI);ctx.stroke();
+  });
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(w/2,h/2,4,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle='#acc3c9';ctx.font='16px ui-monospace,monospace';ctx.fillText(p.ringCount+' RINGS',17,29);
+ }
+ function save(filename,data){
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+ }
+ $('add').addEventListener('click',()=>{
+  try{
+   const url=$('sourceUrl').value.trim();if(!isValidUrl(url))throw Error('Source URL must be http or https.');
+   const p=Engine.makeProfile($('name').value,Engine.parseRadii($('radii').value),{
+    sourceType:$('sourceType').value,sourceUrl:url,notes:''});
+   addProfile(p);selected=store.length-1;candidate=null;lastNull=null;refresh();status('Fingerprint added. '+p.ringCount+' distinct radii.');
+  }catch(e){status(e.message);}
+ });
+ $('loadSamples').addEventListener('click',demo);
+ $('target').addEventListener('change',()=>{selected=Number($('target').value);candidate=null;lastNull=null;refresh();});
+ $('clearLibrary').addEventListener('click',()=>{store.length=0;selected=0;candidate=null;lastNull=null;refresh();status('In-memory collection cleared. No files were deleted.');});
+ $('importFile').addEventListener('change',async e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  try{
+   if(f.size>2*1024*1024)throw Error('Import must be smaller than 2 MB.');
+   const data=JSON.parse(await f.text());
+   let incoming;
+   if(data.schema==='phi-crop-fingerprint-library/v0.3'&&Array.isArray(data.profiles)){
+    incoming=data.profiles.map(x=>Engine.validProfile(x));
+   }else if(data.schema==='phi-crop-fingerprint/v0.3'){
+    incoming=[Engine.validProfile(data)];
+   }else{
+    incoming=[Engine.fromReceipt(data,f.name.replace(/\.json$/i,''))];
+   }
+   if(!incoming.length||incoming.length+store.length>MAX)throw Error('No records, or collection would exceed 100 fingerprints.');
+   incoming.forEach(addProfile);selected=store.length-1;candidate=null;lastNull=null;refresh();
+   status(incoming.length+' JSON fingerprint(s) imported. Provenance is user-supplied, not independently verified.');
+  }catch(err){status('Import failed: '+err.message);}
+  finally{e.target.value='';}
+ });
+ $('exportLibrary').addEventListener('click',()=>{if(!store.length)return;save('crop-fingerprint-library.json',{
+  schema:'phi-crop-fingerprint-library/v0.3',createdAt:new Date().toISOString(),method:Engine.METHOD,
+  profiles:store,warning:'Geometric similarity records do not establish intent or authorship.'
+ });});
+ $('runNull').addEventListener('click',()=>{
+  if(candidate===null)return;
+  try{lastNull=Engine.toyNull(store[selected],store[candidate],{trials:1000,seed:369});refresh();}
+  catch(e){status(e.message);}
+ });
+ $('exportComparison').addEventListener('click',()=>{
+  if(candidate===null||!store[selected])return;
+  save('crop-geometry-comparison.json',{
+   schema:'phi-crop-geometry-comparison/v0.3',createdAt:new Date().toISOString(),method:Engine.METHOD,
+   reference:store[selected],candidate:store[candidate],
+   comparison:Engine.compare(store[selected],store[candidate]),nullSimulation:lastNull,
+   searchedLibrarySize:store.length,
+   caveat:'Descriptive, scale-normalized concentric-ring comparison only. Does not validate map, language, intention, origin or independence; multiple comparisons not corrected.'
+  });
+ });
+ refresh();demo();
+})();
+</script>
+</body></html>
