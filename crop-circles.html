@@ -27,10 +27,12 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 #nullResult{font-size:12px;line-height:1.55}.foot{max-width:1450px;margin:0 auto;padding:0 34px 30px;color:var(--muted);font-size:12px}.foot strong{color:#e5eeeb}
 @media(max-width:1130px){.grid{grid-template-columns:290px minmax(0,1fr)}.results{grid-column:1/-1}.results-inner{display:grid;grid-template-columns:1fr 1fr;gap:15px}}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.results{grid-column:auto}.results-inner{display:block}.intro{padding-top:18px}}
+#visionResults{line-height:1.6;white-space:pre-wrap;min-height:25px}
+#visionDetails{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#d6ebe5}
 </style>
 </head>
 <body>
-<header><div class="brand"><span class="sigil" aria-hidden="true">Φ</span><div><strong>Crop Circle Observatory</strong><small>Math Atelier · Research lab r0.1</small></div></div><a class="back" href="index.html">Back to Math Atelier</a></header>
+<header><div class="brand"><span class="sigil" aria-hidden="true">Φ</span><div><strong>Crop Circle Observatory</strong><small>Math Atelier · Research lab r0.2</small></div></div><a class="back" href="index.html">Back to Math Atelier</a></header>
 <section class="intro"><div class="eyebrow">Examine first · interpret second</div><h1>Patterns aren't automatically messages.<br>Let's measure them anyway.</h1><p>An offline, reproducible workspace for testing geometric interpretations. Start with the published 2008 Barbury Castle angular sequence, or use your own image and trace its boundaries. No images or data are uploaded anywhere.</p></section>
 <main class="grid">
 <section class="panel inputs">
@@ -42,6 +44,7 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 <p id="status" role="status" aria-live="polite"></p>
 <h3>Reading protocol</h3>
 <p>The ten published angle values were measured to roughly 5° precision. This tool divides each interval by the chosen base angle and rounds to the nearest integer. A decimal point after the first digit is a convention, not inferred from interval lengths.</p>
+<p class="note">Your uploaded photo is <strong>not</strong> linked to the default Barbury π angles. The export will mark the streams as independent unless you explicitly apply a trace from that photo.</p>
 <p class="note">Research safeguard: the original π reading was identified before this program existed. Reproducing it is a verification of the published arithmetic, <strong>not</strong> a blind discovery or evidence of nonhuman origin.</p>
 <h3>Possible follow-ups</h3><p>Independent image measurements, geometry similarity, blinded hypotheses, and sky/geographic correlation with proper multiple-testing controls are future adapters, not claims made by this build.</p>
 </section>
@@ -50,6 +53,14 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 <div class="stage-shell"><canvas id="stage" width="720" height="720" aria-label="Geometry preview or image annotation canvas"></canvas></div>
 <p id="stageNote">Schematic drawn from the published interval list, not an original crop-circle survey.</p>
 <label class="upload" for="imageFile">Load an aerial image for manual angle tracing<input id="imageFile" type="file" accept="image/*"></label>
+<section aria-label="Automatic circular-edge analysis">
+<h3>Automatic circle detection · r0.2</h3>
+<p>Classical computer vision computes Sobel edges and tests concentric radial structure. It proposes candidate rings, not encoded messages. An optional manual center click constrains the search.</p>
+<div class="field"><label for="visionSensitivity">Detector sensitivity</label><select id="visionSensitivity"><option value="conservative">Conservative</option><option value="balanced" selected>Balanced</option><option value="exploratory">Exploratory</option></select></div>
+<div class="actions"><button class="primary" id="detectRings" disabled>Find circular edges</button><button id="clearRings">Remove detections</button></div>
+<p id="visionResults" role="status" aria-live="polite">Load a photo to enable the ring detector.</p>
+<div id="visionDetails" aria-label="Detected rings">No ring candidates yet.</div>
+</section>
 <div class="field"><label for="direction">Direction of consecutive boundary rays</label><select id="direction"><option value="clockwise">Clockwise</option><option value="counterclockwise">Counterclockwise</option></select></div>
 <p id="traceStatus" aria-live="polite">With an image: click the centre, then click successive radial boundary markers in reading order. Eleven boundary clicks produce ten angles. Use known direction and preserve the original image.</p>
 <div class="actions"><button id="undo">Undo point</button><button id="clear">Clear trace</button><button class="primary" id="applyTrace" disabled>Use traced angles</button></div>
@@ -69,13 +80,14 @@ table{width:100%;border-collapse:collapse;font:11px ui-monospace,monospace}th,td
 </main>
 <div class="foot"><strong>Sources and limits.</strong> 2008 angular readings: <a href="https://www.cropcirclearchives.co.uk/archives/2008/barbury/barburyRC2008a.html" target="_blank" rel="noopener noreferrer">Barbury Castle published analysis</a>. Later vector reconstruction: <a href="https://www.feedit.info/f/cca-2008-barbury-castle-pi.html" target="_blank" rel="noopener noreferrer">FEEDIT reference</a> (derivative geometry already informed by π). No aerial photographs redistributed. This laboratory measures geometry, not authorship, intent, or extraterrestrial activity.</div>
 <script src="crop-circle-engine.js"></script>
+<script src="crop-circle-vision.js"></script>
 <script>
 (function(){
 'use strict';
 const E=window.PhiCropCircle;
 const $=id=>document.getElementById(id);
 const canvas=$('stage'),ctx=canvas.getContext('2d');
-let image=null,centre=null,boundaries=[],lastResult=null,lastNull=null,lastAngles=E.SAMPLE.slice();
+let image=null,centre=null,boundaries=[],vision=null,tracedFromCurrentImage=false,lastResult=null,lastNull=null,lastAngles=E.SAMPLE.slice();
 const element=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;return e;};
 function getAngles(){return E.parseAngles($('angles').value);}
 function report(message){$('status').textContent=message;}
@@ -123,10 +135,32 @@ function schematic(){
   ctx.fillStyle='#f3c78d';ctx.beginPath();ctx.arc(cx,cy,13,0,2*Math.PI);ctx.fill();
   ctx.font='17px ui-monospace,monospace';ctx.fillStyle='#b0cbd1';ctx.fillText('SCHEMATIC ONLY',20,H-21);
 }
+function imageTransform(){
+  const scale=Math.min(720/image.width,720/image.height),w=image.width*scale,h=image.height*scale;
+  return {scale,w,h,ox:(720-w)/2,oy:(720-h)/2};
+}
+function drawVision(){
+  if(!vision||!vision.center||!vision.rings.length||!image)return;
+  const tr=imageTransform(),sx=tr.w/vision.width,sy=tr.h/vision.height;
+  ctx.save();ctx.strokeStyle='#f3c78d';ctx.lineWidth=3;ctx.setLineDash([10,6]);
+  vision.rings.forEach(r=>{
+    ctx.beginPath();
+    ctx.ellipse(tr.ox+vision.center.x*sx,tr.oy+vision.center.y*sy,r.radius*sx,r.radius*sy,0,0,Math.PI*2);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);ctx.fillStyle='#f3c78d';ctx.beginPath();
+  ctx.arc(tr.ox+vision.center.x*sx,tr.oy+vision.center.y*sy,5,0,2*Math.PI);ctx.fill();
+  ctx.restore();
+}
+function resetVision(){
+  vision=null;$('visionResults').textContent=image?'No current detection. Run Find circular edges.':'Load a photo to enable the ring detector.';
+  $('visionDetails').textContent='No ring candidates yet.';
+}
 function drawPhoto(){
   ctx.fillStyle='#07121b';ctx.fillRect(0,0,720,720);
   const scale=Math.min(720/image.width,720/image.height),w=image.width*scale,h=image.height*scale,ox=(720-w)/2,oy=(720-h)/2;
   ctx.drawImage(image,ox,oy,w,h);
+  drawVision();
   if(centre){
     ctx.strokeStyle='#f3c78d';ctx.lineWidth=3;ctx.beginPath();ctx.arc(centre.x,centre.y,7,0,Math.PI*2);ctx.stroke();
     boundaries.forEach((p,i)=>{
@@ -142,35 +176,68 @@ function draw(){
   const n=boundaries.length;
   $('traceStatus').textContent=!image?'With an image: click the centre, then 11 successive boundary rays.':!centre?'Click the centre of the formation.':n<11?'Centre chosen. '+n+' / 11 boundary rays marked.':'11 rays marked. Review direction, then click Use traced angles.';
   $('applyTrace').disabled=!image||!centre||n<3;
+  $('detectRings').disabled=!image;
 }
 $('analyze').addEventListener('click',showResults);
+$('angles').addEventListener('input',()=>{tracedFromCurrentImage=false;});
 $('angles').addEventListener('change',showResults);
 $('unit').addEventListener('change',showResults);
-$('sample').addEventListener('click',()=>{$('angles').value=E.SAMPLE.join(', ');$('unit').value='36';$('provenance').value='published';showResults();});
+$('sample').addEventListener('click',()=>{tracedFromCurrentImage=false;$('angles').value=E.SAMPLE.join(', ');$('unit').value='36';$('provenance').value='published';showResults();});
 $('imageFile').addEventListener('change',ev=>{
   const f=ev.target.files&&ev.target.files[0];if(!f)return;
   if(!f.type.startsWith('image/')){report('Please choose an image file.');return;}
   const reader=new FileReader();
-  reader.onload=()=>{const next=new Image();next.onload=()=>{image=next;centre=null;boundaries=[];draw();report('Image loaded locally. Select the centre.');};next.onerror=()=>report('Image could not be opened.');next.src=reader.result;};
+  reader.onload=()=>{const next=new Image();next.onload=()=>{image=next;centre=null;boundaries=[];tracedFromCurrentImage=false;resetVision();draw();report('Image loaded locally. Select a centre or run Find circular edges automatically.');};next.onerror=()=>report('Image could not be opened.');next.src=reader.result;};
   reader.onerror=()=>report('Could not read the image.');reader.readAsDataURL(f);
 });
 canvas.addEventListener('click',ev=>{
   if(!image)return;
   const rect=canvas.getBoundingClientRect(),p={x:(ev.clientX-rect.left)*canvas.width/rect.width,y:(ev.clientY-rect.top)*canvas.height/rect.height};
   if(!centre)centre=p;else if(boundaries.length<51)boundaries.push(p);
-  draw();
+  resetVision();draw();
 });
-$('undo').addEventListener('click',()=>{if(boundaries.length)boundaries.pop();else centre=null;draw();});
-$('clear').addEventListener('click',()=>{image=null;centre=null;boundaries=[];$('imageFile').value='';draw();report('Trace cleared.');});
+$('undo').addEventListener('click',()=>{if(boundaries.length)boundaries.pop();else centre=null;resetVision();draw();});
+$('clear').addEventListener('click',()=>{image=null;centre=null;boundaries=[];tracedFromCurrentImage=false;resetVision();$('imageFile').value='';draw();report('Trace cleared.');});
 $('applyTrace').addEventListener('click',()=>{
   try{
     const measured=E.traceAngles(centre,boundaries,$('direction').value);
     if(measured.some(n=>n<=0))throw Error('Overlapping rays produced zero-length intervals; adjust points.');
     $('angles').value=measured.map(n=>n.toFixed(2)).join(', ');
     $('provenance').value='traced';
-    showResults();report('Manually traced '+measured.length+' intervals. Accuracy depends on alignment and reading order.');
+    showResults();tracedFromCurrentImage=!!lastResult;report('Manually traced '+measured.length+' intervals. Accuracy depends on alignment and reading order.');
   }catch(error){report(error.message);}
 });
+$('detectRings').addEventListener('click',()=>{
+  if(!image)return;
+  const button=$('detectRings');button.disabled=true;$('visionResults').textContent='Analyzing local image pixels…';
+  try{
+    const side=380,ratio=Math.min(1,side/Math.max(image.width,image.height));
+    const w=Math.max(1,Math.round(image.width*ratio)),h=Math.max(1,Math.round(image.height*ratio));
+    const offscreen=document.createElement('canvas');offscreen.width=w;offscreen.height=h;
+    const context=offscreen.getContext('2d',{willReadFrequently:true});
+    if(!context)throw Error('2D image processing unavailable in this browser.');
+    context.drawImage(image,0,0,w,h);
+    const pixels=context.getImageData(0,0,w,h),tr=imageTransform();
+    let selectedCenter=null;
+    if(centre){
+      const x=(centre.x-tr.ox)/tr.w*w,y=(centre.y-tr.oy)/tr.h*h;
+      if(x<0||y<0||x>=w||y>=h)throw Error('Selected center is outside the photograph. Clear trace and retry.');
+      selectedCenter={x,y};
+    }
+    vision=window.PhiCropVision.detect(pixels,{center:selectedCenter,sensitivity:$('visionSensitivity').value});
+    const count=vision.rings.length;
+    $('visionResults').textContent=count?
+       count+' candidate ring(s) detected, '+vision.mode+', threshold '+vision.edgeThreshold.toFixed(1)+'.':
+       'No reliable concentric ring candidates found at this sensitivity. This is not evidence that the image lacks geometry.';
+    $('visionDetails').textContent=count?
+      vision.rings.map((r,i)=>'#'+(i+1)+' radius '+r.radius.toFixed(1)+' sampled px  |  coverage '+r.coverage+'/4  |  support '+Math.round(r.support*100)+'%  |  score '+r.score.toFixed(2)).join('\n'):
+      'None. Try adjusting the center or sensitivity. Pixel radii depend on image scaling and perspective.';
+    draw();
+    report('Image-only edge analysis complete; angular decoding stays separate until independently measured.');
+  }catch(error){resetVision();$('visionResults').textContent='Detector error: '+error.message;report(error.message);}
+  finally{button.disabled=false;}
+});
+$('clearRings').addEventListener('click',()=>{resetVision();draw();});
 $('simulate').addEventListener('click',()=>{
   if(!lastResult){report('Analyze valid measurements first.');return;}
   try{
@@ -180,7 +247,7 @@ $('simulate').addEventListener('click',()=>{
 });
 $('export').addEventListener('click',()=>{
   if(!lastResult){report('Nothing valid to export.');return;}
-  const receipt={schema:'phi-crop-circle-observatory/v0.1',generatedAt:new Date().toISOString(),input:{angles:lastAngles,provenance:$('provenance').value,sourceUrl:$('provenance').value==='published'?'https://www.cropcirclearchives.co.uk/archives/2008/barbury/barburyRC2008a.html':null,unit:lastResult.unit,direction:$('direction').value,imageStored:false},result:lastResult,nullSimulation:lastNull,limitations:'Observational decoding only; no inference of authorship, intent, geographic meaning or alien communication.'};
+  const receipt={schema:'phi-crop-circle-observatory/v0.2',generatedAt:new Date().toISOString(),input:{angles:lastAngles,provenance:$('provenance').value,sourceUrl:$('provenance').value==='published'?'https://www.cropcirclearchives.co.uk/archives/2008/barbury/barburyRC2008a.html':null,unit:lastResult.unit,direction:$('direction').value,imageStored:false},result:lastResult,relationships:{angleMeasurementsDerivedFromUploadedImage:tracedFromCurrentImage,visionAndAngularDecodeLinked:!!vision&&tracedFromCurrentImage},vision:vision?{...vision,originalImageDimensions:{width:image.width,height:image.height},selectedCenter:!!centre}:null,nullSimulation:lastNull,limitations:'Observational decoding only; no inference of authorship, intent, geographic meaning or alien communication.'};
   const blob=new Blob([JSON.stringify(receipt,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='crop-circle-receipt.json';a.click();URL.revokeObjectURL(url);
 });
 showResults();

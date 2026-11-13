@@ -5,6 +5,8 @@ on:
       - 'crop-circles.html'
       - 'crop-circle-engine.js'
       - 'tests/crop-circles.mjs'
+      - 'crop-circle-vision.js'
+      - 'tests/crop-circle-vision.mjs'
       - '.github/workflows/crop-circle-observatory.yml'
   push:
     branches: [main]
@@ -24,3 +26,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/crop-circles.mjs
+      - run: node tests/crop-circle-vision.mjs
