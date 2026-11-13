@@ -7,6 +7,9 @@ on:
       - 'tests/crop-circles.mjs'
       - 'crop-circle-vision.js'
       - 'tests/crop-circle-vision.mjs'
+      - 'crop-circle-compare.js'
+      - 'crop-compare.html'
+      - 'tests/crop-circle-compare.mjs'
       - '.github/workflows/crop-circle-observatory.yml'
   push:
     branches: [main]
@@ -14,6 +17,11 @@ on:
       - 'crop-circles.html'
       - 'crop-circle-engine.js'
       - 'tests/crop-circles.mjs'
+      - 'crop-circle-vision.js'
+      - 'tests/crop-circle-vision.mjs'
+      - 'crop-circle-compare.js'
+      - 'crop-compare.html'
+      - 'tests/crop-circle-compare.mjs'
       - '.github/workflows/crop-circle-observatory.yml'
 permissions:
   contents: read
@@ -27,3 +35,4 @@ jobs:
           node-version: '22'
       - run: node tests/crop-circles.mjs
       - run: node tests/crop-circle-vision.mjs
+      - run: node tests/crop-circle-compare.mjs
