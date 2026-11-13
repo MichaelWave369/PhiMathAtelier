@@ -199,6 +199,7 @@ section:focus-within{scroll-margin-top:15px}
    const data=JSON.parse(await f.text());
    let incoming;
    if(data.schema==='phi-crop-fingerprint-library/v0.3'&&Array.isArray(data.profiles)){
+    if(data.profiles.length>MAX-store.length)throw Error('Collection would exceed 100 fingerprints.');
     incoming=data.profiles.map(x=>Engine.validProfile(x));
    }else if(data.schema==='phi-crop-fingerprint/v0.3'){
     incoming=[Engine.validProfile(data)];
