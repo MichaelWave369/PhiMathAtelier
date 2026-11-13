@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08121c">
+<meta name="description" content="Interactive, offline supersolid-inspired two-mode driven-dissipative field simulation. Evidence-limited research prototype.">
+<title>Supersolid Dynamics Lab · ΦMath Atelier</title>
+<style>
+:root{color-scheme:dark;--bg:#08121c;--panel:#0d2030;--panel2:#122b3b;--line:#31505e;--ink:#e9f4f1;--muted:#a7bec5;--teal:#73ead0;--gold:#f1be8f}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--teal)}button,input,select{font:inherit}
+button,select{background:#173244;border:1px solid #4a6976;border-radius:9px;color:var(--ink);padding:9px 12px}
+button{cursor:pointer}button:hover:not(:disabled){border-color:var(--teal)}button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--teal);color:#071f20;font-weight:750;border-color:var(--teal)}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+header{padding:22px clamp(16px,3vw,36px);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+header h1{font:clamp(28px,4.2vw,45px) Georgia,serif;margin:2px 0 8px;letter-spacing:-.5px}header p{color:var(--muted);max-width:800px;margin:0}
+.eyebrow{color:var(--teal);font-size:10px;font-weight:750;letter-spacing:2px;text-transform:uppercase}
+.back{border:1px solid var(--line);border-radius:9px;text-decoration:none;padding:9px 12px;white-space:nowrap}
+.notice{max-width:1490px;margin:20px auto 0;padding:14px 18px;border:1px solid #936d4c;border-radius:12px;background:#40302642;color:#f1d3b8;line-height:1.6}
+.layout{max-width:1530px;margin:auto;padding:16px clamp(14px,2vw,28px) 28px;display:grid;grid-template-columns:minmax(230px,295px) minmax(340px,1fr) minmax(230px,305px);gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;min-width:0}
+h2{font:23px Georgia,serif;margin:0 0 12px}h3{font:18px Georgia,serif;margin:0 0 10px}
+.control{display:block;margin:16px 0}.control>span{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;color:#e3e7e4;font-size:12px;font-weight:650}
+.control output{color:var(--teal);font-variant-numeric:tabular-nums}
+.control small{display:block;color:var(--muted);font-size:10px;margin-top:7px}
+.control input[type=range],.control select{width:100%}.control input[type=range]{accent-color:var(--teal)}
+.hrow{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.hrow>*{flex:1 1 105px}
+canvas{display:block;width:100%;background:#061522}
+.stage-canvas{aspect-ratio:1;image-rendering:pixelated;border:1px solid #315464;border-radius:10px}
+.plot{border:1px solid #315464;border-radius:9px;max-height:170px}
+.stage-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.stage-heading h2{margin:0}.stage-heading span{font:11px ui-monospace,monospace;color:var(--teal)}
+.subhead{margin:18px 0 9px;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#9fc8cb}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.metric{padding:12px;border:1px solid #31505c;border-radius:9px;background:var(--panel2)}
+.metric span{font-size:10px;color:var(--muted);display:block}
+.metric strong{display:block;font:24px ui-monospace,monospace;color:var(--teal);margin:6px 0}
+.metric small{font-size:9px;color:var(--muted)}
+.info{font-size:12px;line-height:1.65;color:var(--muted);margin-top:13px}
+.info strong{color:#e7f2ef}.description{font-size:12px;color:var(--muted);line-height:1.65}
+.experiment{border-top:1px solid var(--line);margin-top:19px;padding-top:17px}
+.experiment .cards{display:grid;gap:8px;margin-top:12px}
+.exp-card{padding:12px;border:1px solid var(--line);border-radius:8px;background:#0a1b2a}
+.exp-card span{display:block;font-size:11px;color:var(--muted)}.exp-card strong{color:var(--gold);font:18px ui-monospace,monospace}.exp-card small{display:block;color:var(--muted);font-size:10px}
+.footer{max-width:1490px;margin:0 auto 26px;padding:0 24px;font-size:11px;color:var(--muted);line-height:1.7}
+#status{min-height:22px;color:var(--gold);font-size:11px}
+#compareData[hidden]{display:none}
+@media(max-width:1120px){.layout{grid-template-columns:280px minmax(330px,1fr)}.results{grid-column:1/-1}}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.results{grid-column:auto}.panel{padding:15px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head><body>
+<header><div>
+  <div class="eyebrow">ΦMath Atelier / Independent scientific modeling stage / R0.1</div>
+  <h1>Supersolid Dynamics Lab</h1>
+  <p>Explore stripe formation, relative phase selection, and phase-winding defects with a reduced, two-mode, driven-dissipative field model.</p>
+</div><a class="back" href="index.html">← Back to Atelier</a></header>
+<div class="notice"><strong>Evidence boundary:</strong> This is an original, <strong>dimensionless teaching model</strong> inspired by the 2026 polariton supersolid paper. It does not solve the experiment's complete spin-orbit-coupled Boltzmann–Gross–Pitaevskii equations, reproduce its quantitative data, verify supersolidity or simulate a quantum processor.</div>
+<main class="layout">
+  <section class="panel" aria-label="Simulation controls">
+    <h2>Field controls</h2>
+    <label class="control"><span>Experiment preset</span>
+      <select id="mode"><option value="two">Two opposing modes · stripes</option><option value="single">Single-mode control · no stripes</option><option value="locked">Phase-locking control</option><option value="vortex">Imprinted +1 vortex · detector check</option></select>
+    </label>
+    <label class="control"><span>Grid resolution</span><select id="grid"><option value="32">32 × 32 (fast)</option><option value="48" selected>48 × 48</option><option value="64">64 × 64 (detailed)</option></select></label>
+    <label class="control"><span>Preferred wave cycles <output id="cyclesValue">5</output></span><input id="cycles" type="range" min="2" max="8" step="1" value="5"><small>Sets ±k₀. Interference stripes occur at twice the mode wavevector.</small></label>
+    <label class="control"><span>Drive / pumping <output id="pumpValue">0.95</output></span><input id="pump" type="range" min=".1" max="1.4" step=".05" value=".95"></label>
+    <label class="control"><span>Nonlinear phase shift <output id="nonlinearityValue">0.30</output></span><input id="nonlinearity" type="range" min="0" max=".8" step=".05" value=".3"></label>
+    <label class="control"><span>Static disorder <output id="disorderValue">0.18</output></span><input id="disorder" type="range" min="0" max="1" step=".05" value=".18"></label>
+    <label class="control"><span>Seeded noise <output id="noiseValue">0.006</output></span><input id="noise" type="range" min="0" max=".04" step=".002" value=".006"></label>
+    <label class="control"><span>Diffusion <output id="diffusionValue">0.20</output></span><input id="diffusion" type="range" min=".05" max=".35" step=".025" value=".2"></label>
+    <label class="control"><span>Seed</span><input id="seed" type="number" min="0" max="4294967295" step="1" value="369"></label>
+    <div class="hrow"><button id="play" class="primary" type="button">▶ Run</button><button id="step" type="button">+25 steps</button><button id="reset" type="button">Reset seed</button><button id="newSeed" type="button">New seed</button></div>
+    <p class="info">Changing parameters resets the current simulation. Run and pause are explicit; nothing accesses a network, camera or microphone.</p>
+  </section>
+  <section class="panel stage" aria-label="Live field visualization">
+    <div class="stage-heading"><h2>Collective field</h2><span id="stageLabel">TWO MODE · SIMULATED</span></div>
+    <canvas id="density" class="stage-canvas" width="48" height="48" role="img" aria-label="Simulated total mode-interference intensity and detected A-plus phase vortices"></canvas>
+    <div class="subhead">Row-averaged intensity vs x</div>
+    <canvas id="profile" class="plot" width="600" height="160" role="img" aria-label="Stripe intensity profile across one field axis"></canvas>
+    <div class="hrow"><button id="exportJson" type="button">Export reproducible JSON</button><button id="exportPng" type="button">Save PNG</button></div>
+    <p class="description">Color shows the intensity of Ψ=A₊e<sup>ikx</sup>+A₋e<sup>−ikx</sup>, not photographed matter. Small outlined markers indicate nonzero integer phase winding detected in the A₊ envelope. Vortex preset <strong>imprints</strong> a defect; its appearance is not spontaneous vortex creation.</p>
+    <p id="status" role="status" aria-live="polite"></p>
+  </section>
+  <section class="panel results" aria-label="Measurements and controlled experiments">
+    <h2>Model observables</h2>
+    <div class="metrics">
+      <div class="metric"><span>Mean intensity</span><strong id="mean">0.00</strong><small>Arbitrary units</small></div>
+      <div class="metric"><span>Stripe harmonic contrast</span><strong id="contrast">0.00</strong><small>Fourier amplitude / DC</small></div>
+      <div class="metric"><span>Stripe phase</span><strong id="phase">—</strong><small>Undefined if contrast vanishes</small></div>
+      <div class="metric"><span>Envelope A₊ vortices</span><strong id="vortices">0</strong><small>Discrete phase winding</small></div>
+    </div>
+    <p class="info">Model time: <strong id="time">0.00</strong> arbitrary units · steps: <strong id="steps">0</strong></p>
+    <div class="experiment">
+      <h3>Compare against controls</h3>
+      <p class="description">Run eight independent seeds for three matched scenarios at fixed grid size (32 × 32), 90 steps per shot. We measure stripe contrast and how uniformly shot phases spread.</p>
+      <button id="runControls" class="primary" type="button">Run eight-seed comparison</button>
+      <div id="compareData" hidden><div id="comparisonCards" class="cards"></div>
+        <div class="subhead">Stripe phase histogram · two-mode shots</div><canvas id="histogram" class="plot" width="300" height="110" role="img" aria-label="Histogram of simulated stripe phases across randomized seeds"></canvas></div>
+      <p class="info">Circular phase resultant: 0 means phases spread widely; 1 means tightly aligned. This is a finite-sample model statistic, not measured coherence or superfluidity.</p>
+    </div>
+    <div class="experiment">
+      <h3>What this tests</h3>
+      <p class="description">A two-mode interference mechanism can generate stripes. Removing one mode suppresses interference. A synthetic phase-locking term can concentrate the relative phases. A deliberately seeded vortex checks the topological winding detector.</p>
+      <p class="description">It <strong>does not</strong> reproduce the article's exciton reservoir kinetics, measured detuning-vs-voltage, spinor dispersion, relaxation parameters, disorder calibration or optical readout.</p>
+      <a href="https://doi.org/10.1126/sciadv.aee4875" target="_blank" rel="noopener noreferrer">Read Muszyński et al. (Science Advances, Oct 2026)</a>
+    </div>
+  </section>
+</main>
+<footer class="footer">ΦMath Atelier · Original software / dimensionless physical analogy · No new physics is established by these simulations. Scientific claims require fitted predictions and independent measurements. Paper DOI: 10.1126/sciadv.aee4875.</footer>
+<script src="supersolid-core.js"></script>
+<script src="supersolid-ui.js"></script>
+</body></html>
