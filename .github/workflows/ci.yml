@@ -31,4 +31,5 @@ jobs:
           node tests/alchemy-conductor.mjs
           node tests/foldmesh.mjs
           node tests/phi47-observatory.mjs
+          node tests/supersolid.mjs
           node tests/pages-assets.mjs
