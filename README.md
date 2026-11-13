@@ -424,3 +424,7 @@ Open [FoldMesh Lab](foldmesh.html) from the Atelier's left navigation. The lab i
 6. Export the recipe and import it to reproduce the same stored information.
 
 Run `node tests/foldmesh.mjs` for deterministic model and wiring checks. The GitHub Actions smoke workflow also runs this test on pull requests.
+
+## Supersolid Dynamics Lab R0.1
+
+Launch [Supersolid Dynamics Lab](supersolid.html) from the main control sidebar, or open `supersolid.html` directly. It is a framework-free, entirely offline, **dimensionless two-envelope driven-dissipative toy model** inspired by the observed two-minima interference mechanism in Muszyński et al., *Science Advances* (16 Oct 2026, DOI: [10.1126/sciadv.aee4875](https://doi.org/10.1126/sciadv.aee4875)). Features: time-evolving 2D complex envelopes, intensity heatmap, stripe Fourier contrast and phase, deliberately imprinted-vortex test, deterministic seeded noise, 8-seed baselines (two modes / single mode / phenomenological phase locking), and local JSON/PNG export. It does not reproduce the authors' full spinor solver or provide empirical evidence of supersolidity. See [full methods and limits](docs/SUPERSOLID_DYNAMICS_R01.md). Run `node tests/supersolid.mjs`.
